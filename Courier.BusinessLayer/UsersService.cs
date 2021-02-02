@@ -83,19 +83,5 @@ namespace Courier.BusinessLayer
                 return longitude;
             }
         }
-        
-        //public int GetUserId(Guid accountNumerOfRecipient)
-        //{
-        //    using (var context = new ParcelsDbContext())
-        //    {
-        //        var userId = context.Accounts.FirstOrDefault(user => user.AccountNumber == accountNumerOfRecipient).UserId;
-        //        if (userId == null)
-        //        {
-        //            return 0;
-        //        }
-
-        //        return userId;
-        //    }
-        //}
     }
 }

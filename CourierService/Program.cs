@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Text;
 using System.Timers;
 using Courier.BusinessLayer;
 using Courier.BusinessLayer.Models;
@@ -77,9 +75,7 @@ namespace Courier
             _menu.ClearOption();
             _menu.AddOption(new MenuItem { Key = 1, Action = AddParcel, Description = "Add parcel" });
             _menu.AddOption(new MenuItem { Key = 2, Action = AddCourierCar, Description = "Add courier car" });
-            _menu.AddOption(new MenuItem { Key = 5, Action = CreateCarParcelBase, Description = "Add Base CarParcels" });
-            _menu.AddOption(new MenuItem { Key = 6, Action = GenerateShipmentList, Description = "ShipmentRaport" });
-
+            _menu.AddOption(new MenuItem { Key = 5, Action = GenerateShipmentList, Description = "Add courier car" });
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
         }
 
@@ -108,10 +104,12 @@ namespace Courier
            {
                List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.DriverId == courier.DriverId).ToList();
 
-               var jsonDataSerializer = new JsonDataSerializer();
-               var date = _timeService.currentTime().ToString(("MM_dd_yyyy"));
-               var filePath = $@"C:\GitRepository\CourseJuniorDev\Courier\Shipment_List\DriverId{courier.DriverId}_{date}.json";
-               jsonDataSerializer.Serialize(courierShipmentList, filePath);
+               
+               var date = _timeService.currentTime().ToString(("MM-dd-yyyy"));
+               var filePath = $@"C:\GitRepository\Courier\Courier\Shipment_List/DriverId{courier.DriverId}_{date}.json";
+
+                var jsonDataSerializer = new JsonDataSerializer();
+                jsonDataSerializer.Serialize(courierShipmentList, filePath);
            }
 
             //po wygenerowaniu raportu czyszcze tablice carParcel z paczek które zostały przpisane do kurierów,
@@ -138,7 +136,14 @@ namespace Courier
             var city = _ioHelper.GetTextFromUser("\nCity");
             var street = _ioHelper.GetTextFromUser("\nStreet");
             var houseNumber = _ioHelper.GetTextFromUser("\nHouse number");
-            var zipCode = _ioHelper.GetTextFromUser("\nZip code (00-000)");
+            
+            var zipCode = _ioHelper.GetTextFromUser("\nZip code (00000)");
+            while (zipCode.Length != 5)
+            {
+                Console.WriteLine("\nWrong format of Zip code, try again...");
+                zipCode = _ioHelper.GetTextFromUser("\nZip code (00000)");
+            }
+
             var parcelSize = _ioHelper.GetParcelSize("\nParcel size");
 
             var jsonData = _coordinatesService.GetCoordinatesForAddress("Poland", city, street, houseNumber);
@@ -254,13 +259,21 @@ namespace Courier
             var city = _ioHelper.GetTextFromUser("\nCity");
             var street = _ioHelper.GetTextFromUser("\nStreet");
             var houseNumber = _ioHelper.GetTextFromUser("\nHouse number");
-            var zipCode = _ioHelper.GetTextFromUser("\nZip code (00-000)");
+            
+            var zipCode = _ioHelper.GetTextFromUser("\nZip code (00000)");
+            while (zipCode.Length != 5)
+            {
+                Console.WriteLine("\nWrong format of Zip code, try again...");
+                zipCode = _ioHelper.GetTextFromUser("\nZip code (00000)");
+            }
+            
+            
             var userType = _ioHelper.GetUserType("\nEnter customer type");
 
             var jsonData = _coordinatesService.GetCoordinatesForAddress("Poland", city, street, houseNumber);
             if (jsonData == null)
             {
-                Console.WriteLine("\nReceiver address not recognized");
+                Console.WriteLine("\nAddress not recognized");
                 return;
             }
             var jsonSerializer = new JsonDataSerializer();

@@ -21,35 +21,5 @@ namespace Courier.BusinessLayer
 
             return currentDate;
         }
-
-        static void Main(string[] args)
-        {
-            DateTime lastProcessed = DateTime.Now.Date;
-
-
-
-
-            while (true)
-            {
-
-                var a = currentTime();
-                var k = a.Date;
-
-                if (lastProcessed != k)
-                {
-                    lastProcessed = k;
-                    Console.WriteLine($"Hello World!  {a}  {a.Date}");
-                }
-                else
-                {
-                    Console.WriteLine($"alredy prcseedd at {lastProcessed}");
-                }
-
-                Thread.Sleep(1000);
-
-            }
-
-        }
-
     }
 }

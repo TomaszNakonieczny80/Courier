@@ -22,12 +22,7 @@ namespace Courier.BusinessLayer
 
                 return null;
             }
-            //var data = (JArray)JsonConvert.DeserializeObject(jsonData);
-            //List<double> coordinates = new List<double>();
-            //coordinates.Add((double)data[0]["lat"]);
-            //coordinates.Add((double)data[0]["lon"]);
-
-
+           
             return jsonData;
         }
     }

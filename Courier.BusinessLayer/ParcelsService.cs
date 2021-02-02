@@ -66,6 +66,15 @@ namespace Courier.BusinessLayer
             }
         }
 
+        public CarParcel GetParcelId(int parcelId)
+        {
+            using (var context = new ParcelsDbContext())
+            {
+                return context.CarParcels
+                    .FirstOrDefault(carParcel => carParcel.ParcelId == parcelId);
+            }
+        }
+
         public List<Parcel> GetParcelsWaitingToBePosted()
         {
             using (var context = new ParcelsDbContext())
@@ -145,13 +154,11 @@ namespace Courier.BusinessLayer
                         Update(carParcel);
                     }
                     //oznaczam paczke jako wysłana/przypisana do samochodu
-                    foreach (var carParcelId in GetListCarParcelId(carId))
-                    {
-                        var carParcel = GetCarParcelId(carParcelId);
-                        carParcel.Posted = true;
+                    
+                    var parcel = GetParcelId(selectedParcel.Id);
+                    parcel.Posted = true;
 
-                        Update(carParcel);
-                    }
+                    Update(parcel);
 
                     selectedParcel.ParcelStatus = ParcelStatus.Posted;
                     Update(selectedParcel);
@@ -179,7 +186,6 @@ namespace Courier.BusinessLayer
                     return shipementList;
                 }
             }
-
             return shipementList;
         }
 
@@ -226,9 +232,7 @@ namespace Courier.BusinessLayer
               var result =  context.CarParcels.FirstOrDefault(carParcel => carParcel.Full == false);
               if (result == null)
               {
-                  Console.WriteLine("brak dostepny aut, idz do konkurencji, zapraszamy ponownie");
                   return false;
-
               }
               return true;
             }
