@@ -39,12 +39,12 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public List<CarParcel> GetListPostedParcels()
+        public List<CarParcel> GetAllCarParcel()
         {
             using (var context = new ParcelsDbContext())
             {
-                var parcelsPosted = context.CarParcels.Where(parcel => parcel.Posted == true).ToList();
-                return parcelsPosted;
+                var carParcel = context.CarParcels.ToList();
+                return carParcel;
             }
         }
 

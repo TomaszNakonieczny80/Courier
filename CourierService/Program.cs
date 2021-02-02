@@ -75,7 +75,6 @@ namespace Courier
             _menu.ClearOption();
             _menu.AddOption(new MenuItem { Key = 1, Action = AddParcel, Description = "Add parcel" });
             _menu.AddOption(new MenuItem { Key = 2, Action = AddCourierCar, Description = "Add courier car" });
-            _menu.AddOption(new MenuItem { Key = 5, Action = GenerateShipmentList, Description = "Add courier car" });
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
         }
 
@@ -112,13 +111,12 @@ namespace Courier
                 jsonDataSerializer.Serialize(courierShipmentList, filePath);
            }
 
-            //po wygenerowaniu raportu czyszcze tablice carParcel z paczek które zostały przpisane do kurierów,
-            //paczki nie przypisane beda uwzgleniane w kolejnym raporcie
-            foreach (var carParcel in _parcelsService.GetListPostedParcels())
+            //po wygenerowaniu raportu czyszcze tablice carParcel,
+            //paczki nie przypisane beda uwzgleniane w kolejnym raporcie na pierwszym m-cu
+            foreach (var carParcel in _parcelsService.GetAllCarParcel())
             {
                 _parcelsService.Remove(carParcel);
-            }
-            
+            }          
         }
 
 
@@ -200,7 +198,7 @@ namespace Courier
                 Console.WriteLine("\nEnter car data:");
 
                 var capacity = _ioHelper.GetUintFromUser("\nCapacity (kg)");
-                if (capacity < 500)
+                if (capacity < 200)
                 {
                     Console.WriteLine("\n Min capacity required 500 kg");
                     return;
