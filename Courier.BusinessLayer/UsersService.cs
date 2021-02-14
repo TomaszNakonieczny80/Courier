@@ -4,10 +4,22 @@ using System.Text;
 using Courier.DataLayer;
 using Courier.DataLayer.Models;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace Courier.BusinessLayer
 {
-    public class UsersService
+    public interface IUsersService
+    {
+        void Add(User user);
+        bool CheckIfDriver(int userId);
+        bool CheckIfPasswordIsCorrect(string userPassword);
+        bool CheckIfUserExist(string userEmail);
+        double GetLatitude(int userId);
+        double GetLongitude(int userId);
+        User GetUser(int userId);
+        int GetUserId(string userEmail);
+    }
+    public class UsersService : IUsersService
     {
         public void Add(User user)
         {
@@ -63,6 +75,17 @@ namespace Courier.BusinessLayer
             {
                 var userId = context.Users.FirstOrDefault(user => user.Email == userEmail).Id;
                 return userId;
+            }
+        }
+
+        public User GetUser(int userId)
+        {
+            using (var context = new ParcelsDbContext())
+            {
+                var user = context.Users
+                    .Include(address => address.Address)
+                    .FirstOrDefault(user => user.Id == userId);
+                return user;
             }
         }
 

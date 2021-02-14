@@ -4,7 +4,11 @@ using System.Text;
 
 namespace Courier
 {
-    class MenuItem
+    public interface IMenuItem
+    {
+       
+    }
+    public class MenuItem : IMenuItem
     {
         public int Key;
         public Action Action;

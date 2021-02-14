@@ -15,5 +15,6 @@ namespace Courier.DataLayer.Models
         public bool Available { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public uint AverageSpeed { get; set; }
     }
 }

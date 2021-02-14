@@ -6,7 +6,11 @@ using Courier.DataLayer.Models;
 
 namespace Courier.BusinessLayer
 {
-    public class CarsService
+    public interface ICarsService
+    {
+        void Add(Car car);
+    }
+    public class CarsService : ICarsService
     {
         public void Add(Car car)
         {

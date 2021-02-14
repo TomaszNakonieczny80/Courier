@@ -8,7 +8,11 @@ using RestSharp;
 
 namespace Courier.BusinessLayer
 {
-    public class CoordinatesService
+    public interface ICoordinatesService
+    {
+        string GetCoordinatesForAddress(string country, string city, string street, string building);
+    }
+    public class CoordinatesService : ICoordinatesService
     {
         public string GetCoordinatesForAddress(string country, string city, string street, string building)
         {

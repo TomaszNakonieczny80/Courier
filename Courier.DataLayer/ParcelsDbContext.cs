@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Courier.DataLayer.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +19,7 @@ namespace Courier.DataLayer
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=.;Database=HW4_20210102_CourierOperations;Trusted_Connection=True");
+            optionsBuilder.UseSqlServer(@"Server=.;Database=HW5_20210215_CourierOperations;Trusted_Connection=True");
         }
     }
 }

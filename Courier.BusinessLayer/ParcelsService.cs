@@ -6,10 +6,35 @@ using System.Text;
 using Courier.BusinessLayer.Models;
 using Courier.DataLayer;
 using Courier.DataLayer.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 
 namespace Courier.BusinessLayer
 {
-    public class ParcelsService
+    public interface IParcelsService
+    {
+        void Add(Parcel parcel);
+        void Add(CarParcel carParcel);
+        List<CarParcel> GetAllCarParcel();
+        CarParcel GetCarParcel(int? parcelId);
+        CarParcel GetCarParcelId(int carParcelId);
+        CarParcel GetParcelId(int parcelId);
+        List<Parcel> GetParcelsWaitingToBePosted();
+        List<Parcel> GetPostedParcels();
+        void Remove(CarParcel carParcel);
+        List<Parcel> GetParcelsOnTheWay();
+        void SetParcelsAsOnTheWay();
+        void SetParcelsAsDelivered(List<Parcel> parcelsOnTheWay);
+        List<Car> GetAvailableCars();
+        void CreateCarParcelsBase();
+        List<Shipment> AttachDriverToParcel();
+        List<int> GetListCarParcelId(int? carId);
+        uint GetAvailableCapcity(int? carId);
+        void Update(CarParcel carParcel);
+        void Update(Parcel parcel);
+        bool AvailableCars();
+    }
+    public class ParcelsService : IParcelsService
     {
        
         public void Add(Parcel parcel)
@@ -48,21 +73,21 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public CarParcel Get(int carId)
-        {
-            using (var context = new ParcelsDbContext())
-            {
-                return context.CarParcels
-                    .FirstOrDefault(carParcel => carParcel.Id == carId);
-            }
-        }
-
         public CarParcel GetCarParcelId(int carParcelId)
         {
             using (var context = new ParcelsDbContext())
             {
                 return context.CarParcels
                     .FirstOrDefault(carParcel => carParcel.Id == carParcelId);
+            }
+        }
+
+        public CarParcel GetCarParcel(int? parcelId)
+        {
+            using (var context = new ParcelsDbContext())
+            {
+                return context.CarParcels
+                    .FirstOrDefault(carParcel => carParcel.ParcelId == parcelId);
             }
         }
 
@@ -79,21 +104,62 @@ namespace Courier.BusinessLayer
         {
             using (var context = new ParcelsDbContext())
             {
-                var parcelsToBePosted = context.Parcels.Where(parcel => parcel.ParcelStatus == 0).ToList();
+                var parcelsToBePosted = context.Parcels.AsQueryable().Where(parcel => parcel.ParcelStatus == 0).ToList();
                 return parcelsToBePosted;
             }
         }
 
+        public List<Parcel> GetPostedParcels()
+        {
+            using (var context = new ParcelsDbContext())
+            {
+                var parcels = context.Parcels.AsQueryable().Where(parcel => parcel.ParcelStatus == ParcelStatus.Posted).ToList();
+                return parcels;
+            }
+        }
+
+        public List<Parcel> GetParcelsOnTheWay()
+        {
+            using (var context = new ParcelsDbContext())
+            {
+                var parcels = context.Parcels.AsQueryable()
+                    .Include(user => user.Sender)
+                    .ThenInclude( address => address.Address)
+                    .Include(user => user.Recipient)
+                    .ThenInclude(address => address.Address)
+                    .Where(parcel => parcel.ParcelStatus == ParcelStatus.OnTheWay).ToList();
+                return parcels;
+            }
+        }
+
+        public void SetParcelsAsOnTheWay()
+        {
+            foreach (var parcel in GetPostedParcels())
+            {
+                parcel.ParcelStatus = ParcelStatus.OnTheWay;
+                Update(parcel);
+            }
+        }
+
+        public void SetParcelsAsDelivered(List<Parcel> parcelsOnTheWay)
+        {
+            foreach (var parcel in parcelsOnTheWay)
+            {
+                parcel.ParcelStatus = ParcelStatus.Delivered;
+                Update(parcel);
+            }
+        }
+        
         public List<Car> GetAvailableCars()
         {
             using (var context = new ParcelsDbContext())
             {
-                var carsAvailable = context.Cars.Where(car => car.Available == true).ToList();
+                var carsAvailable = context.Cars.AsQueryable().Where(car => car.Available == true).ToList();
                 return carsAvailable;
             }
         }
 
-        public void CreatCarParcelsBase()
+        public void CreateCarParcelsBase()
         {
             foreach (var parcel in GetParcelsWaitingToBePosted())
             {
@@ -101,18 +167,28 @@ namespace Courier.BusinessLayer
                 {
                     foreach (var carsAvailable in GetAvailableCars())
                     {
-                        var carAvailable = context.Cars.Where(car => car.Id == carsAvailable.Id).FirstOrDefault();
+                        var carAvailable = context.Cars.AsQueryable().Where(car => car.Id == carsAvailable.Id).FirstOrDefault();
+                        var distanceToParcel = Math.Round((Math.Sqrt((Math.Pow((parcel.ParcelLatitude - carAvailable.Latitude), 2)) + ((Math.Pow((parcel.ParcelLongitude - carAvailable.Longitude), 2)))) * 73));
+                        var distanceToRecipient = Math.Round((Math.Sqrt((Math.Pow((parcel.RecipientLatitude - carAvailable.Latitude), 2)) + ((Math.Pow((parcel.RecipientLongitude - carAvailable.Longitude), 2)))) * 73));
+                        var averageSpeed = carAvailable.AverageSpeed;
+                        var travelTimeToParcel = distanceToParcel / averageSpeed;
+                        var travelTimeToRecipient = distanceToRecipient / averageSpeed;
+                        var totalTravelTime = ((distanceToParcel / averageSpeed) + (distanceToRecipient / averageSpeed))*2;
+                        double workingHours = 10;
                         
                         CarParcel carParcel = new CarParcel
                         {
                             ParcelId = parcel.Id,
-                            ParcelLatitude = parcel.Latitude,
-                            ParcelLongitude = parcel.Longitude,
                             CarId = carAvailable.Id,
-                            CarLatitude = carAvailable.Latitude,
-                            CarLongitude = carAvailable.Longitude,
-                            Distance = Math.Round((Math.Sqrt((Math.Pow((parcel.Latitude - carAvailable.Latitude), 2)) + ((Math.Pow((parcel.Longitude - carAvailable.Longitude), 2)))) * 73)),
+                            DistanceToParcel = distanceToParcel,
+                            DistanceToRecipient = distanceToRecipient,
                             AvailableCapcity = carAvailable.Capacity,
+                            AverageSpeed = averageSpeed,
+                            TravelTimeToParcel = travelTimeToParcel,
+                            TravelTimeToRecipient = travelTimeToRecipient,
+                            TotalTravelTime = totalTravelTime,
+                       
+                            AvailableTime = workingHours,
                             Full = false,
                             Posted = false
                         };
@@ -126,7 +202,7 @@ namespace Courier.BusinessLayer
         {
             List<Shipment> shipementList = new List<Shipment>();
             
-            int carId;
+            int? carId;
             foreach (var selectedParcel in GetParcelsWaitingToBePosted())
             {
                 //Sprawdzam czy sa samochody z wolną przestrzenia ładunkowa, jezeli wszystkie sa juz załadowane na full zamykam liste przewozowa,
@@ -134,52 +210,75 @@ namespace Courier.BusinessLayer
                 if (AvailableCars())
                 {
                     //dla kazdej paczki oczekujacej na wysłanie dobieram najblizszego kuriera do nadawcy
-                    //jezeli kurier jest juz zapakowany na full biore nastepnego najblizszego
+                    //jezeli kurier jest juz zapakowany na full lub total czas odbioru i przesyłki przekaracza godziny pracy kuriera biore nastepnego najblizszego
                     
                     using (var context = new ParcelsDbContext())
                     {
-                        carId = context.CarParcels.Where(parcel => parcel.Full == false)
-                            .OrderBy(parcel => parcel.Distance)
-                            .FirstOrDefault(parcel => parcel.ParcelId == selectedParcel.Id)
-                            .CarId;
+                        
+                        if (context.CarParcels.AsQueryable().Where(parcel => parcel.Full == false && parcel.AvailableTime - parcel.TotalTravelTime >= 0)
+                            .OrderBy(parcel => parcel.DistanceToParcel)
+                            .FirstOrDefault(parcel => parcel.ParcelId == selectedParcel.Id) == null)
+                        {
+                            carId = null;
+                        }
+                        else
+                        {
+                            carId = context.CarParcels.AsQueryable().Where(parcel => parcel.Full == false && parcel.AvailableTime - parcel.TotalTravelTime >= 0)
+                                .OrderBy(parcel => parcel.DistanceToParcel)
+                                .FirstOrDefault(parcel => parcel.ParcelId == selectedParcel.Id)
+                                .CarId;
+                        }
+                        
                     }
 
-                    int parcelWeight = (int) selectedParcel.ParcelSize;
-                    //aktualizuje dostepna ładownosc samochodu po przypisaniu paczki, 
-                    foreach (var carParcelId in GetListCarParcelId(carId))
+                    if (carId != null)
                     {
-                        var carParcel = GetCarParcelId(carParcelId);
-                        carParcel.AvailableCapcity -= (uint) parcelWeight;
 
-                        Update(carParcel);
-                    }
-                    //oznaczam paczke jako wysłana/przypisana do samochodu
-                    
-                    var parcel = GetParcelId(selectedParcel.Id);
-                    parcel.Posted = true;
+                        int parcelWeight = (int) selectedParcel.ParcelSize;
+                        double deltaTime = GetCarParcel(selectedParcel.Id).AvailableTime -
+                                           GetCarParcel(selectedParcel.Id).TotalTravelTime;
 
-                    Update(parcel);
-
-                    selectedParcel.ParcelStatus = ParcelStatus.Posted;
-                    Update(selectedParcel);
-
-                    //jezeli w aucie pozostało mniej miejsca niz na 1 duza poczke to oznaczam go jako zapełniony na maksa
-                    if (GetAvailableCapcity(carId) < 150)
-                    {
+                        //aktualizuje dostepna ładownosc samochodu i dostepny czas po przypisaniu paczki, 
                         foreach (var carParcelId in GetListCarParcelId(carId))
                         {
                             var carParcel = GetCarParcelId(carParcelId);
-                            carParcel.Full = true;
+                            
+
+                            carParcel.AvailableCapcity -= (uint) parcelWeight;
+                            carParcel.AvailableTime = deltaTime;
 
                             Update(carParcel);
                         }
+                        //oznaczam paczke jako wysłana/przypisana do samochodu
+
+                        var parcel = GetParcelId(selectedParcel.Id);
+                        parcel.Posted = true;
+
+                        Update(parcel);
+
+                        selectedParcel.ParcelStatus = ParcelStatus.Posted;
+                        Update(selectedParcel);
+
+                        var minAvailableCapacity = 150;
+                        //jezeli w aucie pozostało mniej miejsca niz na 1 duza poczke 150 kg to oznaczam go jako zapełniony na maksa
+                        if (GetAvailableCapcity(carId) < minAvailableCapacity)
+                        {
+                            foreach (var carParcelId in GetListCarParcelId(carId))
+                            {
+                                var carParcel = GetCarParcelId(carParcelId);
+                                carParcel.Full = true;
+
+                                Update(carParcel);
+                            }
+                        }
+
+                        shipementList.Add(new Shipment()
+                        {
+                            ParcelNumber = selectedParcel.ParcelNumber,
+                            DriverId = carId,
+                            RegisterDate = selectedParcel.RegisterDate,
+                        });
                     }
-                    shipementList.Add(new Shipment()
-                    {
-                        ParcelNumber = selectedParcel.ParcelNumber,
-                        DriverId = carId,
-                        RegisterDate = selectedParcel.RegisterDate,
-                    });
                 }
                 else
                 {
@@ -189,16 +288,16 @@ namespace Courier.BusinessLayer
             return shipementList;
         }
 
-        public List<int> GetListCarParcelId(int carId)
+        public List<int> GetListCarParcelId(int? carId)
         {
             using (var context = new ParcelsDbContext())
             {
-                var carParcelsId = context.CarParcels.Where(carParcel => carParcel.CarId == carId).Select(carParcel => carParcel.Id).ToList();
+                var carParcelsId = context.CarParcels.AsQueryable().Where(carParcel => carParcel.CarId == carId).Select(carParcel => carParcel.Id).ToList();
                 return carParcelsId;
             }
         }
 
-        public uint GetAvailableCapcity(int carId)
+        public uint GetAvailableCapcity(int? carId)
         {
             using (var context = new ParcelsDbContext())
             {
