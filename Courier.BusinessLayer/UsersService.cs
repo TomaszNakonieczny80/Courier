@@ -21,9 +21,16 @@ namespace Courier.BusinessLayer
     }
     public class UsersService : IUsersService
     {
+        private readonly Func<IParcelsDbContext> _dbContextFactoryMethod;
+
+        public UsersService(Func<IParcelsDbContext> dbContextFactoryMethod)
+        {
+            _dbContextFactoryMethod = dbContextFactoryMethod;
+        }
+
         public void Add(User user)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 context.Users.Add(user);
                 context.SaveChanges();
@@ -32,7 +39,7 @@ namespace Courier.BusinessLayer
 
         public bool CheckIfUserExist(string userEmail)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var result = context.Users.FirstOrDefault(user => user.Email == userEmail);
                 if (result == null)
@@ -45,7 +52,7 @@ namespace Courier.BusinessLayer
 
         public bool CheckIfPasswordIsCorrect(string userPassword)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var result = context.Users.FirstOrDefault(user => user.Password == userPassword);
                 if (result == null)
@@ -58,7 +65,7 @@ namespace Courier.BusinessLayer
 
         public bool CheckIfDriver(int userId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var result = context.Users.FirstOrDefault(user => user.Id == userId && user.UserType == UserType.Driver);
                 if (result == null)
@@ -71,7 +78,7 @@ namespace Courier.BusinessLayer
 
         public int GetUserId(string userEmail)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var userId = context.Users.FirstOrDefault(user => user.Email == userEmail).Id;
                 return userId;
@@ -80,7 +87,7 @@ namespace Courier.BusinessLayer
 
         public User GetUser(int userId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var user = context.Users
                     .Include(address => address.Address)
@@ -91,7 +98,7 @@ namespace Courier.BusinessLayer
 
         public double GetLatitude(int userId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var latitude = context.Addresses.FirstOrDefault(address => address.Id == userId).Latitude;
                 return latitude;
@@ -100,7 +107,7 @@ namespace Courier.BusinessLayer
 
         public double GetLongitude(int userId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var longitude = context.Addresses.FirstOrDefault(address => address.Id == userId).Longitude;
                 return longitude;

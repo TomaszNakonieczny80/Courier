@@ -36,10 +36,16 @@ namespace Courier.BusinessLayer
     }
     public class ParcelsService : IParcelsService
     {
-       
+        private readonly Func<IParcelsDbContext> _dbContextFactoryMethod;
+
+        public ParcelsService(Func<IParcelsDbContext> dbContextFactoryMethod)
+        {
+            _dbContextFactoryMethod = dbContextFactoryMethod;
+        }
+
         public void Add(Parcel parcel)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 context.Parcels.Add(parcel);
                 context.SaveChanges();
@@ -48,7 +54,7 @@ namespace Courier.BusinessLayer
 
         public void Add(CarParcel carParcel)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 context.CarParcels.Add(carParcel);
                 context.SaveChanges();
@@ -57,7 +63,7 @@ namespace Courier.BusinessLayer
 
         public void Remove(CarParcel carParcel)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 context.CarParcels.Remove(carParcel);
                 context.SaveChanges();
@@ -66,7 +72,7 @@ namespace Courier.BusinessLayer
 
         public List<CarParcel> GetAllCarParcel()
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var carParcel = context.CarParcels.ToList();
                 return carParcel;
@@ -75,7 +81,7 @@ namespace Courier.BusinessLayer
 
         public CarParcel GetCarParcelId(int carParcelId)
         {
-            using (var context = new ParcelsDbContext())
+            using(var context = _dbContextFactoryMethod())
             {
                 return context.CarParcels
                     .FirstOrDefault(carParcel => carParcel.Id == carParcelId);
@@ -84,7 +90,7 @@ namespace Courier.BusinessLayer
 
         public CarParcel GetCarParcel(int? parcelId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 return context.CarParcels
                     .FirstOrDefault(carParcel => carParcel.ParcelId == parcelId);
@@ -93,7 +99,7 @@ namespace Courier.BusinessLayer
 
         public CarParcel GetParcelId(int parcelId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 return context.CarParcels
                     .FirstOrDefault(carParcel => carParcel.ParcelId == parcelId);
@@ -102,7 +108,7 @@ namespace Courier.BusinessLayer
 
         public List<Parcel> GetParcelsWaitingToBePosted()
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var parcelsToBePosted = context.Parcels.AsQueryable().Where(parcel => parcel.ParcelStatus == 0).ToList();
                 return parcelsToBePosted;
@@ -111,7 +117,7 @@ namespace Courier.BusinessLayer
 
         public List<Parcel> GetPostedParcels()
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var parcels = context.Parcels.AsQueryable().Where(parcel => parcel.ParcelStatus == ParcelStatus.Posted).ToList();
                 return parcels;
@@ -120,11 +126,12 @@ namespace Courier.BusinessLayer
 
         public List<Parcel> GetParcelsOnTheWay()
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
-                var parcels = context.Parcels.AsQueryable()
+                var parcels = context.Parcels
+                    .AsQueryable()
                     .Include(user => user.Sender)
-                    .ThenInclude( address => address.Address)
+                    .ThenInclude(address => address.Address)
                     .Include(user => user.Recipient)
                     .ThenInclude(address => address.Address)
                     .Where(parcel => parcel.ParcelStatus == ParcelStatus.OnTheWay).ToList();
@@ -152,7 +159,7 @@ namespace Courier.BusinessLayer
         
         public List<Car> GetAvailableCars()
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var carsAvailable = context.Cars.AsQueryable().Where(car => car.Available == true).ToList();
                 return carsAvailable;
@@ -163,7 +170,7 @@ namespace Courier.BusinessLayer
         {
             foreach (var parcel in GetParcelsWaitingToBePosted())
             {
-                using (var context = new ParcelsDbContext())
+                using (var context = _dbContextFactoryMethod())
                 {
                     foreach (var carsAvailable in GetAvailableCars())
                     {
@@ -210,9 +217,9 @@ namespace Courier.BusinessLayer
                 if (AvailableCars())
                 {
                     //dla kazdej paczki oczekujacej na wysłanie dobieram najblizszego kuriera do nadawcy
-                    //jezeli kurier jest juz zapakowany na full lub total czas odbioru i przesyłki przekaracza godziny pracy kuriera biore nastepnego najblizszego
-                    
-                    using (var context = new ParcelsDbContext())
+                    //jezeli kurier jest juz zapakowany na full lub total czas odbioru i przesyłki przekaracza godziny pracy kuriera biore nastepnego najblizszego kuriera
+
+                    using (var context = _dbContextFactoryMethod())
                     {
                         
                         if (context.CarParcels.AsQueryable().Where(parcel => parcel.Full == false && parcel.AvailableTime - parcel.TotalTravelTime >= 0)
@@ -235,6 +242,7 @@ namespace Courier.BusinessLayer
                     {
 
                         int parcelWeight = (int) selectedParcel.ParcelSize;
+                        //licze ile czasu dostepnego zostanie kurierowi po przypisaniu paczki
                         double deltaTime = GetCarParcel(selectedParcel.Id).AvailableTime -
                                            GetCarParcel(selectedParcel.Id).TotalTravelTime;
 
@@ -290,7 +298,7 @@ namespace Courier.BusinessLayer
 
         public List<int> GetListCarParcelId(int? carId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var carParcelsId = context.CarParcels.AsQueryable().Where(carParcel => carParcel.CarId == carId).Select(carParcel => carParcel.Id).ToList();
                 return carParcelsId;
@@ -299,7 +307,7 @@ namespace Courier.BusinessLayer
 
         public uint GetAvailableCapcity(int? carId)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 var availableCapacity = context.CarParcels.FirstOrDefault(carParcel => carParcel.CarId == carId).AvailableCapcity;
                 return availableCapacity;
@@ -308,7 +316,7 @@ namespace Courier.BusinessLayer
 
         public void Update(CarParcel carParcel)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 context.CarParcels.Update(carParcel);
                 context.SaveChanges();
@@ -317,7 +325,7 @@ namespace Courier.BusinessLayer
 
         public void Update(Parcel parcel)
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
                 context.Parcels.Update(parcel);
                 context.SaveChanges();
@@ -326,7 +334,7 @@ namespace Courier.BusinessLayer
 
         public bool AvailableCars()
         {
-            using (var context = new ParcelsDbContext())
+            using (var context = _dbContextFactoryMethod())
             {
               var result =  context.CarParcels.FirstOrDefault(carParcel => carParcel.Full == false);
               if (result == null)
