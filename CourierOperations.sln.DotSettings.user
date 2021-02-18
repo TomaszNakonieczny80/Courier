@@ -1,0 +1,9 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2da55772_002D9539_002D4eda_002Db34f_002D648d101c4449/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GetParcelsOnTheWay_CorrectListOfParcelsStatusOnTheWay" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB::.NETCoreApp,Version=v3.1::Courier.Tests.BusinessLayer.ParcelServiceTests.GetAllCarParcels_CorrectList&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB::.NETCoreApp,Version=v3.1::Courier.Tests.BusinessLayer.ParcelServiceTests.GetParcelsOnTheWay_CorrectListOfParcelsInStatusOnTheWay&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB::.NETCoreApp,Version=v3.1::Courier.Tests.BusinessLayer.ParcelServiceTests.GetAllCarParcels_CorrectCarParcelId&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB::.NETCoreApp,Version=v3.1::Courier.Tests.BusinessLayer.ParcelServiceTests.GetCarId_CorrectCarId&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
