@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Timers;
+using Unity;
+using BookStore.BusinessLayer;
 using Courier.BusinessLayer;
 using Courier.BusinessLayer.Models;
 using Courier.BusinessLayer.Serializers;
@@ -11,14 +14,15 @@ namespace Courier
 {
     class Program
     {
-        private Menu _menu = new Menu();
-        private IoHelper _ioHelper = new IoHelper();
-        private DatabaseManagementService _databaseManagementService = new DatabaseManagementService();
-        private UsersService _usersService = new UsersService();
-        private ParcelsService _parcelsService = new ParcelsService();
-        private CarsService _carsService = new CarsService();
-        private CoordinatesService _coordinatesService = new CoordinatesService();
-        private TimeService _timeService = new TimeService();
+        private IMenu _menu;
+        private IIoHelper _ioHelper;
+        private IDatabaseManagementService _databaseManagementService;
+        private IUsersService _usersService;
+        private IParcelsService _parcelsService;
+        private ICarsService _carsService;
+        private ICoordinatesService _coordinatesService;
+        private ITimeService _timeService;
+        private INotificationsService _notificationService;
         private int _userId;
 
 
@@ -27,8 +31,32 @@ namespace Courier
 
         static void Main()
         {
-            new Program().Run();
+            var container = new UnityDiContainerProvider().GetContainer();
+            container.Resolve<Program>().Run();
         }
+
+        public Program(
+            IMenu menu,
+            IIoHelper ioHelper,
+            IDatabaseManagementService databaseManagementService,
+            IUsersService usersService,
+            IParcelsService parcelsService,
+            ICarsService carsService,
+            ICoordinatesService coordinatesService,
+            ITimeService timeService,
+            INotificationsService notificationService)
+        {
+            _menu = menu;
+            _ioHelper = ioHelper;
+            _databaseManagementService = databaseManagementService;
+            _usersService = usersService;
+            _parcelsService = parcelsService;
+            _carsService = carsService;
+            _coordinatesService = coordinatesService;
+            _timeService = timeService;
+            _notificationService = notificationService;
+        }
+
         void Run()
         {
             SetTimer();
@@ -82,19 +110,52 @@ namespace Courier
         {
             var timeNow = _timeService.currentTime();
             var delta = timeNow.Date.AddDays(1) - timeNow;
-            var deltaMillsek = delta.TotalMilliseconds;
-            
-            Timer aTimer = new Timer();
-            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-         
-            aTimer.Interval = deltaMillsek/60;
-            aTimer.Enabled = true;
+            var deltaMilisec = delta.TotalMilliseconds;
+            var eightHoursMilisec = 28800000;
+            var eighteenHoursMilisec = 64800000;
+
+            Timer aTimerForRaport = new Timer();
+            aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipementRaport);
+
+            aTimerForRaport.Interval = deltaMilisec / 600;
+            aTimerForRaport.Enabled = true;
+
+            Timer aTimerForStartDelivery = new Timer();
+            aTimerForStartDelivery.Elapsed += new ElapsedEventHandler(SetStatusAsOnTheWay);
+
+            aTimerForStartDelivery.Interval = (deltaMilisec + eightHoursMilisec) / 600;
+            aTimerForStartDelivery.Enabled = true;
+
+            Timer aTimerForStopDelivery = new Timer();
+            aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(SetStatusOnDelivered);
+
+            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 600;
+            aTimerForStopDelivery.Enabled = true;
+
+
         }
 
-        private void OnTimedEvent(object source, ElapsedEventArgs e)
+        private void ShipementRaport(object source, ElapsedEventArgs e)
         {
             GenerateShipmentList();
         }
+
+        private void SetStatusAsOnTheWay(object source, ElapsedEventArgs e)
+        {
+            _parcelsService.SetParcelsAsOnTheWay();
+        }
+
+        private void SetStatusOnDelivered(object source, ElapsedEventArgs e)
+        {
+            var parcelsOnTheWay = _parcelsService.GetParcelsOnTheWay();
+            if (parcelsOnTheWay != null)
+            {
+                _notificationService.NotifyParcelsDelivered(parcelsOnTheWay);
+            }
+            _parcelsService.SetParcelsAsDelivered(parcelsOnTheWay);
+        }
+
+
         void GenerateShipmentList()
         {
            CreateCarParcelBase();
@@ -103,9 +164,15 @@ namespace Courier
            {
                List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.DriverId == courier.DriverId).ToList();
 
+               string systemDrivePath = Path.GetPathRoot(Environment.SystemDirectory);
+               string targetPath = $"{systemDrivePath}Shiping_list";
+               Directory.CreateDirectory(targetPath);
                
                var date = _timeService.currentTime().ToString(("MM-dd-yyyy"));
-               var filePath = $@"C:\GitRepository\Courier\Courier\Shipment_List/DriverId{courier.DriverId}_{date}.json";
+
+                string fileName = $"DriverId{courier.DriverId}_{date}.json";
+                string filePath = Path.Combine(targetPath, fileName);
+              //  var filePath = $@"C:\GitRepository\Courier\Courier\Shipment_List/DriverId{courier.DriverId}_{date}.json";
 
                 var jsonDataSerializer = new JsonDataSerializer();
                 jsonDataSerializer.Serialize(courierShipmentList, filePath);
@@ -116,13 +183,12 @@ namespace Courier
             foreach (var carParcel in _parcelsService.GetAllCarParcel())
             {
                 _parcelsService.Remove(carParcel);
-            }          
+            }
         }
-
-
+        
         void CreateCarParcelBase()
         {
-            _parcelsService.CreatCarParcelsBase();
+            _parcelsService.CreateCarParcelsBase();
         }
 
         void AddParcel()
@@ -154,7 +220,7 @@ namespace Courier
             var deserializedData = jsonSerializer.Deserialize(jsonData);
             var latitude = (double)deserializedData[0]["lat"];
             var longitude = (double)deserializedData[0]["lon"];
-
+            var sender = _usersService.GetUser(_userId);
             Parcel newParcel = new Parcel
             {
                 ParcelNumber = Guid.NewGuid(),
@@ -175,11 +241,29 @@ namespace Courier
 
                 },
                 SenderId = _userId,
+                Sender = new User
+                {
+                    FirstName = sender.FirstName,
+                    Surname = sender.Surname,
+                    Email = sender.Email,
+                    Address = new Address
+                    {
+                        Street = sender.Address.Street,
+                        HouseNumber = sender.Address.HouseNumber,
+                        City = sender.Address.City,
+                        ZipCode = sender.Address.ZipCode,
+                        Latitude = sender.Address.Latitude,
+                        Longitude = sender.Address.Longitude,
+                    },
+                },
                 ParcelSize = parcelSize,
                 RegisterDate = _timeService.currentTime(),
                 ParcelStatus = ParcelStatus.WaitingToBePosted,
-                Latitude = _usersService.GetLatitude(_userId),
-                Longitude = _usersService.GetLongitude(_userId),
+                ParcelLatitude = _usersService.GetLatitude(_userId),
+                ParcelLongitude = _usersService.GetLongitude(_userId),
+                RecipientLatitude = latitude,
+                RecipientLongitude = longitude,
+
             };
 
             _parcelsService.Add(newParcel);
@@ -203,12 +287,20 @@ namespace Courier
                     Console.WriteLine("\n Min capacity required 500 kg");
                     return;
                 }
-                
+
+                var averageSpeed = _ioHelper.GetUintFromUser("\nAverage speed km/h");
+                if (averageSpeed > 90 || averageSpeed < 30)
+                {
+                    Console.WriteLine("\n Required min averageSpeed 30 km/h, max 90 km/h, try again...");
+                    return;
+                }
+
                 Car newCar = new Car
                 {
                     Brand = _ioHelper.GetTextFromUser("\nBrand"),
                     Model = _ioHelper.GetTextFromUser("\nModel"),
                     RegistrationNumber = _ioHelper.GetTextFromUser("\nRegistration number"),
+                    AverageSpeed = averageSpeed,
                     Capacity = capacity,
                     UserId = _userId,
                     Available = true ,

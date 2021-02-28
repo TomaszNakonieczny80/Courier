@@ -5,7 +5,16 @@ using Courier.DataLayer.Models;
 
 namespace Courier
 {
-    class IoHelper
+    public interface IIoHelper
+    {
+        string GetEmailFromUser(string message);
+        int GetIntFromUser(string message);
+        ParcelSize GetParcelSize(string message);
+        string GetTextFromUser(string message);
+        uint GetUintFromUser(string message);
+        UserType GetUserType(string message);
+    }
+    public class IoHelper : IIoHelper
     {
         
         public int GetIntFromUser(string message)

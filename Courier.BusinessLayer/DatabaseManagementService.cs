@@ -5,7 +5,11 @@ using Courier.DataLayer;
 
 namespace Courier.BusinessLayer
 {
-    public class DatabaseManagementService
+    public interface IDatabaseManagementService
+    {
+        void EnsureDatabaseCreation();
+    }
+    public class DatabaseManagementService : IDatabaseManagementService
     {
         public void EnsureDatabaseCreation()
         {

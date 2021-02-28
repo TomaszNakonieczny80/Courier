@@ -4,7 +4,11 @@ using System.Text;
 
 namespace Courier.BusinessLayer
 {
-    public class TimeService
+    public interface ITimeService
+    {
+        DateTime currentTime();
+    }
+    public class TimeService : ITimeService
     {
         public DateTime currentTime()
         {
@@ -12,7 +16,7 @@ namespace Courier.BusinessLayer
             var now = DateTime.Now;
 
             var different = now - start;
-            var timeSpan =  different.TotalSeconds * 60;
+            var timeSpan =  different.TotalSeconds * 60 *60;
 
             var newTimeSpan = TimeSpan.FromSeconds(timeSpan);
 
