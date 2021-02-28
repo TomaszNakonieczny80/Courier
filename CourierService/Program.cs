@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Timers;
 using Unity;
-using BookStore.BusinessLayer;
 using Courier.BusinessLayer;
 using Courier.BusinessLayer.Models;
 using Courier.BusinessLayer.Serializers;
 using Courier.DataLayer.Models;
+using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 
 namespace Courier
 {
@@ -96,6 +96,7 @@ namespace Courier
             _menu.AddOption(new MenuItem { Key = 1, Action = Login, Description = "Login" });
             _menu.AddOption(new MenuItem { Key = 2, Action = Registration, Description = "Registration" });
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
+            _menu.AddOption(new MenuItem { Key = 4, Action = GenerateShipmentListperCourier, Description = "ShipementListUser" });
         }
         private void Menu()
         {
@@ -154,41 +155,15 @@ namespace Courier
             }
             _parcelsService.SetParcelsAsDelivered(parcelsOnTheWay);
         }
-
-
+     
         void GenerateShipmentList()
         {
-           CreateCarParcelBase();
-           var shipmentList = _parcelsService.AttachDriverToParcel();
-           foreach (var courier in shipmentList)
-           {
-               List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.DriverId == courier.DriverId).ToList();
-
-               string systemDrivePath = Path.GetPathRoot(Environment.SystemDirectory);
-               string targetPath = $"{systemDrivePath}Shiping_list";
-               Directory.CreateDirectory(targetPath);
-               
-               var date = _timeService.currentTime().ToString(("MM-dd-yyyy"));
-
-                string fileName = $"DriverId{courier.DriverId}_{date}.json";
-                string filePath = Path.Combine(targetPath, fileName);
-              //  var filePath = $@"C:\GitRepository\Courier\Courier\Shipment_List/DriverId{courier.DriverId}_{date}.json";
-
-                var jsonDataSerializer = new JsonDataSerializer();
-                jsonDataSerializer.Serialize(courierShipmentList, filePath);
-           }
-
-            //po wygenerowaniu raportu czyszcze tablice carParcel,
-            //paczki nie przypisane beda uwzgleniane w kolejnym raporcie na pierwszym m-cu
-            foreach (var carParcel in _parcelsService.GetAllCarParcel())
-            {
-                _parcelsService.Remove(carParcel);
-            }
+          _parcelsService.GenerateShipmentList();
         }
-        
-        void CreateCarParcelBase()
+
+        void GenerateShipmentListperCourier()
         {
-            _parcelsService.CreateCarParcelsBase();
+            _parcelsService.GenerateShipmentListAsync(2);
         }
 
         void AddParcel()
@@ -266,7 +241,7 @@ namespace Courier
 
             };
 
-            _parcelsService.Add(newParcel);
+            _parcelsService.AddAsync(newParcel).Wait();
             Console.WriteLine("\nNew parcel added successfully");
         }
 
@@ -307,7 +282,7 @@ namespace Courier
                     Latitude = _usersService.GetLatitude(_userId),
                     Longitude = _usersService.GetLongitude(_userId),
                 };
-                _carsService.Add(newCar);
+                _carsService.AddAsync(newCar).Wait();
                 Console.WriteLine("\nNew car added successfully");
             }
         }
@@ -327,8 +302,8 @@ namespace Courier
             }
 
             Console.WriteLine("\nLogin was successful");
-
-            _userId = _usersService.GetUserId(email);
+            var user = _usersService.GetUserIdAsync(email).Result;
+            _userId = user.Id;
             OpenMainMenu();
         }
 
@@ -388,7 +363,7 @@ namespace Courier
                 },
                 UserType = userType,
             };
-            _usersService.Add(newUser);
+            _usersService.AddAsync(newUser).Wait();
 
             Console.WriteLine("\nNew user added successfully");
         }

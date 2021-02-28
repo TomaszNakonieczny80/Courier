@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Courier.DataLayer;
 using Courier.DataLayer.Models;
+using System.Threading.Tasks;
 
 namespace Courier.BusinessLayer
 {
     public interface ICarsService
     {
-        void Add(Car car);
+        Task AddAsync(Car car);
+        int GetCarId(int userId);
     }
     public class CarsService : ICarsService
     {
@@ -19,12 +22,19 @@ namespace Courier.BusinessLayer
             _dbContextFactoryMethod = dbContextFactoryMethod;
         }
 
-        public void Add(Car car)
+        public async Task AddAsync(Car car)
         {
             using (var context = _dbContextFactoryMethod())
             {
                 context.Cars.Add(car);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
+            }
+        }
+        public int GetCarId(int userId)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                return context.Cars.FirstOrDefault(user => user.UserId == userId).Id;
             }
         }
     }

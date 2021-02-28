@@ -1,9 +1,0 @@
-C:\GitRepository\Courier\Courier\Courier.DataLayer\bin\Debug\netstandard2.1\Courier.DataLayer.deps.json
-C:\GitRepository\Courier\Courier\Courier.DataLayer\bin\Debug\netstandard2.1\Courier.DataLayer.dll
-C:\GitRepository\Courier\Courier\Courier.DataLayer\bin\Debug\netstandard2.1\Courier.DataLayer.pdb
-C:\GitRepository\Courier\Courier\Courier.DataLayer\obj\Debug\netstandard2.1\Courier.DataLayer.csprojAssemblyReference.cache
-C:\GitRepository\Courier\Courier\Courier.DataLayer\obj\Debug\netstandard2.1\Courier.DataLayer.AssemblyInfoInputs.cache
-C:\GitRepository\Courier\Courier\Courier.DataLayer\obj\Debug\netstandard2.1\Courier.DataLayer.AssemblyInfo.cs
-C:\GitRepository\Courier\Courier\Courier.DataLayer\obj\Debug\netstandard2.1\Courier.DataLayer.csproj.CoreCompileInputs.cache
-C:\GitRepository\Courier\Courier\Courier.DataLayer\obj\Debug\netstandard2.1\Courier.DataLayer.dll
-C:\GitRepository\Courier\Courier\Courier.DataLayer\obj\Debug\netstandard2.1\Courier.DataLayer.pdb

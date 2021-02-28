@@ -2,11 +2,9 @@
 using Courier.BusinessLayer;
 using Courier.DataLayer;
 using Unity;
-using Serilog;
-using Microsoft.Extensions.Logging;
 using Unity.Injection;
 
-namespace Courier
+namespace Courier.WebApi
 {
     public class UnityDiContainerProvider
     {
@@ -14,9 +12,9 @@ namespace Courier
         {
             var container = new UnityContainer();
 
-            container.RegisterType<IMenu, Menu>();
-            container.RegisterType<IMenuItem, MenuItem>();
-            container.RegisterType<IIoHelper, IoHelper>();
+            //container.RegisterType<IMenu, Menu>();
+            //container.RegisterType<IMenuItem, MenuItem>();
+            //container.RegisterType<IIoHelper, IoHelper>();
             container.RegisterType<IDatabaseManagementService, DatabaseManagementService>();
             container.RegisterType<IUsersService, UsersService>();
             container.RegisterType<IParcelsService, ParcelsService>();
