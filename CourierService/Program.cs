@@ -258,9 +258,9 @@ namespace Courier
                 }
 
                 var averageSpeed = _ioHelper.GetUintFromUser("\nAverage speed km/h");
-                if (averageSpeed > 90 || averageSpeed < 30)
+                if (averageSpeed < 0)
                 {
-                    Console.WriteLine("\n Required min averageSpeed 30 km/h, max 90 km/h, try again...");
+                    Console.WriteLine("\n min speed cant be equal or less than 0 , try again...");
                     return;
                 }
 
