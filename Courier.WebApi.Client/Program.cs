@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using Courier.WebApi.Client.Model;
 using Newtonsoft.Json;
 
@@ -71,6 +70,12 @@ namespace Courier.WebApi.Client
             System.Environment.Exit(0);
         }
 
+        public class RespoceMessage
+        {
+            public string output { get; set; }
+            public int Id { get; set; }
+        }
+
         private void Login()
         {
            
@@ -85,16 +90,24 @@ namespace Courier.WebApi.Client
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    var reponseObject = JsonConvert.DeserializeObject(responseText);
-                    
-                    Console.WriteLine($"\nLogin successful");
-                    _userId = int.Parse(responseText);
-                    Menu();
+                    var reponseObject = JsonConvert.DeserializeObject<RespoceMessage>(responseText);
 
+                    if (reponseObject.Id == 0)
+                    {
+                        Console.WriteLine($"\nFailed. Email or password not recognized");
+                        return;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"\nLogin successful");
+                        //_userId = int.Parse(responseText);
+                        _userId = reponseObject.Id;
+                        Menu();
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"\nFailed. Email or password not recognized");
+                    Console.WriteLine($"Failed. Status code: {response.StatusCode}");
                     return;
                 }
             }

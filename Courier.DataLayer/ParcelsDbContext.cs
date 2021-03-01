@@ -28,7 +28,7 @@ namespace Courier.DataLayer
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=.;Database=HW5_20210215_CourierOperations;Trusted_Connection=True");
+            optionsBuilder.UseSqlServer(@"Server=.;Database=HW6_20210301_CourierOperations;Trusted_Connection=True");
         }
     }
 }

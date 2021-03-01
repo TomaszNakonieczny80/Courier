@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Courier.BusinessLayer;
 using Courier.BusinessLayer.Models;
-using Courier.DataLayer.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Courier.WebApi.Controllers

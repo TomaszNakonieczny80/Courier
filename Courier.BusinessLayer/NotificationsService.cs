@@ -26,6 +26,7 @@ namespace Courier.BusinessLayer
 
             using (var client = new EventStoreClient(settings))
             {
+                
                 client.AppendToStreamAsync(
                     stream,
                     StreamState.Any,

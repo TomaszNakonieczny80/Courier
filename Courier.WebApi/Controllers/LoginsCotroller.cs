@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Courier.BusinessLayer;
-using Courier.DataLayer.Models;
+using Courier.WebApi.Models;
 using Microsoft.AspNetCore.Mvc;
+
 
 namespace Courier.WebApi.Controllers
 {
@@ -19,36 +20,64 @@ namespace Courier.WebApi.Controllers
         }
 
         /// <summary>
-        /// Endpoint allowing to log in for all users
+        /// Endpoint allowing to log in for all users 
         /// </summary>
-        ///
-        /// <returns>user Id</returns>
+        /// <returns>User Id</returns>
         [HttpGet]
-        public async Task<int?> GetCustomerId([FromQuery] string email, [FromQuery] string password)
+        public async Task<ResponseMessage> GetCustomerId ([FromQuery] string email, [FromQuery] string password)
         {
-            var courierId = await _usersService.GetCustomerIdAsync(email, password);
-            if (courierId == null)
+
+            var courier = await _usersService.GetCustomerIdAsync(email, password);
+            if (courier == null)
             {
-                throw new ArgumentException("User not recognized");
+                var unauthorizedResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+                {
+                        Content = new StringContent("User not recognized", Encoding.UTF8, "application/json")
+                };
+                
+                return new ResponseMessage() {Output = "User not recognized"}; 
             }
-            return courierId?.Id;
+
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(courier.Id.ToString(), Encoding.UTF8, "application/json")
+            };
+            
+            return new ResponseMessage()
+            {
+                Id = courier.Id,
+                Output = "succeeded"
+            };
         }
 
         /// <summary>
-        /// Endpoint allowing to log only for couriers 
+        /// Endpoint allowing to log in only for couriers 
         /// </summary>
-
         /// <returns>User Id</returns>
         [HttpGet("courier")]
-        public async Task<int?> GetCourierId([FromQuery] string email, [FromQuery] string password)
+        public async Task<ResponseMessage> GetCourierId([FromQuery] string email, [FromQuery] string password)
         {
-            var courierId = await _usersService.GetCourierIdAsync(email, password);
-            if (courierId == null)
+            var courier = await _usersService.GetCourierIdAsync(email, password);
+            if (courier == null)
             {
-                throw new ArgumentException("User not recognized");
+                var unauthorizedResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+                {
+                    Content = new StringContent("User not recognized", Encoding.UTF8, "application/json")
+                };
+
+                return new ResponseMessage() { Output = "User not recognized" };
             }
-            
-            return courierId?.Id;
+
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(courier.Id.ToString(), Encoding.UTF8, "application/json")
+            };
+
+            return new ResponseMessage()
+            {
+                Id = courier.Id,
+                Output = "succeeded"
+            };
         }
     }
 }

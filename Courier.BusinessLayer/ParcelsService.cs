@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using Courier.BusinessLayer.Models;
 using Courier.DataLayer;
 using Courier.DataLayer.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 using System.Threading.Tasks;
 using Courier.BusinessLayer.Serializers;
 
@@ -24,12 +21,12 @@ namespace Courier.BusinessLayer
         CarParcel GetParcelId(int parcelId);
         List<Parcel> GetParcelsWaitingToBePosted();
         List<Parcel> GetPostedParcels();
-        void Remove(CarParcel carParcel);
+        Task RemoveAsync(CarParcel carParcel);
         List<Parcel> GetParcelsOnTheWay();
         void SetParcelsAsOnTheWay();
         void SetParcelsAsDelivered(List<Parcel> parcelsOnTheWay);
         List<Car> GetAvailableCars();
-        Task CreateCarParcelsBase();
+        Task CreateCarParcelsBaseAsync();
         List<Shipment> AttachDriverToParcel();
         List<int> GetListCarParcelId(int? carId);
         uint GetAvailableCapcity(int? carId);
@@ -38,6 +35,7 @@ namespace Courier.BusinessLayer
         bool AvailableCars();
         void GenerateShipmentList();
         Task <List<Shipment>> GenerateShipmentListAsync(int courierId);
+        Task ClearCarParcelBaseAsync();
     }
     public class ParcelsService : IParcelsService
     {
@@ -70,12 +68,12 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public void Remove(CarParcel carParcel)
+        public async Task RemoveAsync(CarParcel carParcel)
         {
             using (var context = _dbContextFactoryMethod())
             {
                 context.CarParcels.Remove(carParcel); 
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
@@ -175,7 +173,7 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public async Task CreateCarParcelsBase()
+        public async Task CreateCarParcelsBaseAsync()
         {
             foreach (var parcel in GetParcelsWaitingToBePosted())
             {
@@ -296,9 +294,16 @@ namespace Courier.BusinessLayer
             return shipementList;
         }
 
+        public async Task ClearCarParcelBaseAsync()
+        {
+            foreach (var carParcel in GetAllCarParcel())
+            {
+                await RemoveAsync(carParcel);
+            }
+        }
         public void GenerateShipmentList()
         {
-            CreateCarParcelsBase();
+            CreateCarParcelsBaseAsync().Wait();
             var shipmentList = AttachDriverToParcel();
             foreach (var courier in shipmentList)
             {
@@ -320,21 +325,19 @@ namespace Courier.BusinessLayer
 
             //po wygenerowaniu raportu czyszcze tablice carParcel,
             //paczki nie przypisane beda uwzgleniane w kolejnym raporcie na pierwszym m-cu
-            foreach (var carParcel in GetAllCarParcel())
-            {
-                Remove(carParcel);
-            }
+            ClearCarParcelBaseAsync().Wait();
         }
 
         public async Task<List<Shipment>> GenerateShipmentListAsync(int courierId)
         {
-            await CreateCarParcelsBase();
+            await CreateCarParcelsBaseAsync();
 
             var shipmentList = AttachDriverToParcel();
             var carId = _carsService.GetCarId(courierId);
             
             List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.CarId == carId).ToList();
 
+            await ClearCarParcelBaseAsync();
             return courierShipmentList;
         }
 
