@@ -17,7 +17,7 @@ namespace Courier.BusinessLayer
     public interface IParcelsService
     {
         Task AddAsync(Parcel parcel);
-        void Add(CarParcel carParcel);
+        Task AddAsync(CarParcel carParcel);
         List<CarParcel> GetAllCarParcel();
         CarParcel GetCarParcel(int? parcelId);
         CarParcel GetCarParcelId(int carParcelId);
@@ -29,7 +29,7 @@ namespace Courier.BusinessLayer
         void SetParcelsAsOnTheWay();
         void SetParcelsAsDelivered(List<Parcel> parcelsOnTheWay);
         List<Car> GetAvailableCars();
-        void CreateCarParcelsBase();
+        Task CreateCarParcelsBase();
         List<Shipment> AttachDriverToParcel();
         List<int> GetListCarParcelId(int? carId);
         uint GetAvailableCapcity(int? carId);
@@ -61,12 +61,12 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public void Add(CarParcel carParcel)
+        public async Task AddAsync(CarParcel carParcel)
         {
             using (var context = _dbContextFactoryMethod())
             {
                 context.CarParcels.Add(carParcel);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
@@ -175,7 +175,7 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public void CreateCarParcelsBase()
+        public async Task CreateCarParcelsBase()
         {
             foreach (var parcel in GetParcelsWaitingToBePosted())
             {
@@ -208,7 +208,7 @@ namespace Courier.BusinessLayer
                             Full = false,
                             Posted = false
                         };
-                        Add(carParcel);
+                        await AddAsync(carParcel);
                     }
                 }
             }
@@ -328,7 +328,7 @@ namespace Courier.BusinessLayer
 
         public async Task<List<Shipment>> GenerateShipmentListAsync(int courierId)
         {
-            CreateCarParcelsBase();
+            await CreateCarParcelsBase();
 
             var shipmentList = AttachDriverToParcel();
             var carId = _carsService.GetCarId(courierId);

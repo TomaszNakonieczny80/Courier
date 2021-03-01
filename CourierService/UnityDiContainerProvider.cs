@@ -15,7 +15,6 @@ namespace Courier
             var container = new UnityContainer();
 
             container.RegisterType<IMenu, Menu>();
-            container.RegisterType<IMenuItem, MenuItem>();
             container.RegisterType<IIoHelper, IoHelper>();
             container.RegisterType<IDatabaseManagementService, DatabaseManagementService>();
             container.RegisterType<IUsersService, UsersService>();

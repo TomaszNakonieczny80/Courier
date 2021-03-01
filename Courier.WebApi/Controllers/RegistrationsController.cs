@@ -22,7 +22,7 @@ namespace Courier.WebApi.Controllers
         /// Endpoint allowing to register user
         /// </summary>
         [HttpPost]
-        public async Task PostUserAddress([FromBody] User user)//, [FromBody] Address address)
+        public async Task PostUserAddress([FromBody] User user)
         {
             await _usersService.AddAsync(user);
         }

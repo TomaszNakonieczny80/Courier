@@ -14,6 +14,8 @@ namespace Courier.Tests.BusinessLayer
     {
         private readonly Func<IParcelsDbContext> _contextFactoryMethod = () => new ParcelInMemoryDbContext();
         private Mock<IParcelsService> _parcelServiceMock;
+        private ITimeService _timeService;
+        private ICarsService _carsService;
 
         [SetUp]
         public void SetUp()
@@ -55,7 +57,7 @@ namespace Courier.Tests.BusinessLayer
         public void GetAllCarParcels_CorrectList()
         {
             
-            var sut = new ParcelsService(_contextFactoryMethod);
+            var sut = new ParcelsService(_contextFactoryMethod, _timeService, _carsService);
 
             var result = sut.GetAllCarParcel();
 
@@ -66,7 +68,7 @@ namespace Courier.Tests.BusinessLayer
         public void GetCarId_CorrectCarId()
         {
             var carParcelId = 1;
-            var sut = new ParcelsService(_contextFactoryMethod);
+            var sut = new ParcelsService(_contextFactoryMethod, _timeService, _carsService);
 
             var result = sut.GetCarParcelId(carParcelId);
 

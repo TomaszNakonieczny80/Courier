@@ -47,6 +47,7 @@ namespace Courier.WebApi.Controllers
             {
                 throw new ArgumentException("User not recognized");
             }
+            
             return courierId?.Id;
         }
     }

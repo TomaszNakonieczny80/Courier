@@ -96,7 +96,6 @@ namespace Courier
             _menu.AddOption(new MenuItem { Key = 1, Action = Login, Description = "Login" });
             _menu.AddOption(new MenuItem { Key = 2, Action = Registration, Description = "Registration" });
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
-            _menu.AddOption(new MenuItem { Key = 4, Action = GenerateShipmentListperCourier, Description = "ShipementListUser" });
         }
         private void Menu()
         {
@@ -118,19 +117,19 @@ namespace Courier
             Timer aTimerForRaport = new Timer();
             aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipementRaport);
 
-            aTimerForRaport.Interval = deltaMilisec / 600;
+            aTimerForRaport.Interval = deltaMilisec / 60;
             aTimerForRaport.Enabled = true;
 
             Timer aTimerForStartDelivery = new Timer();
             aTimerForStartDelivery.Elapsed += new ElapsedEventHandler(SetStatusAsOnTheWay);
 
-            aTimerForStartDelivery.Interval = (deltaMilisec + eightHoursMilisec) / 600;
+            aTimerForStartDelivery.Interval = (deltaMilisec + eightHoursMilisec) / 60;
             aTimerForStartDelivery.Enabled = true;
 
             Timer aTimerForStopDelivery = new Timer();
             aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(SetStatusOnDelivered);
 
-            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 600;
+            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 60;
             aTimerForStopDelivery.Enabled = true;
 
 
@@ -159,11 +158,6 @@ namespace Courier
         void GenerateShipmentList()
         {
           _parcelsService.GenerateShipmentList();
-        }
-
-        void GenerateShipmentListperCourier()
-        {
-            _parcelsService.GenerateShipmentListAsync(2);
         }
 
         void AddParcel()

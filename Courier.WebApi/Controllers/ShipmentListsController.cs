@@ -25,10 +25,10 @@ namespace Courier.WebApi.Controllers
         /// <param name="userId"></param>
         /// <returns>List of parcels to delivery by user</returns>
 
-        [HttpGet("{userid}")]
+        [HttpGet("{userId}")]
         public async Task<List<Shipment>> GetShipmentList(int userId)
         {
-            return _parcelsService.GenerateShipmentListAsync(userId).Result;
+            return await _parcelsService.GenerateShipmentListAsync(userId);
         }
     }
 }
