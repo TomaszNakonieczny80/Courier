@@ -70,7 +70,7 @@ namespace Courier.WebApi.Client
             System.Environment.Exit(0);
         }
 
-        public class RespoceMessage
+        public class ResponseMessage
         {
             public string output { get; set; }
             public int Id { get; set; }
@@ -90,7 +90,7 @@ namespace Courier.WebApi.Client
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    var reponseObject = JsonConvert.DeserializeObject<RespoceMessage>(responseText);
+                    var reponseObject = JsonConvert.DeserializeObject<ResponseMessage>(responseText);
 
                     if (reponseObject.Id == 0)
                     {
