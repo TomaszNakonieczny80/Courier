@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Courier.DataLayer.Migrations
 {
     [DbContext(typeof(ParcelsDbContext))]
-    [Migration("20210202105608_DatabaseHW4_20210202_Courier")]
-    partial class DatabaseHW4_20210202_Courier
+    [Migration("20210301142942_courier_01032021")]
+    partial class courier_01032021
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -61,6 +61,9 @@ namespace Courier.DataLayer.Migrations
                     b.Property<bool>("Available")
                         .HasColumnType("bit");
 
+                    b.Property<long>("AverageSpeed")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Brand")
                         .HasColumnType("nvarchar(max)");
 
@@ -97,16 +100,19 @@ namespace Courier.DataLayer.Migrations
                     b.Property<long>("AvailableCapcity")
                         .HasColumnType("bigint");
 
+                    b.Property<double>("AvailableTime")
+                        .HasColumnType("float");
+
+                    b.Property<long>("AverageSpeed")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("CarId")
                         .HasColumnType("int");
 
-                    b.Property<double>("CarLatitude")
+                    b.Property<double>("DistanceToParcel")
                         .HasColumnType("float");
 
-                    b.Property<double>("CarLongitude")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Distance")
+                    b.Property<double>("DistanceToRecipient")
                         .HasColumnType("float");
 
                     b.Property<bool>("Full")
@@ -115,14 +121,20 @@ namespace Courier.DataLayer.Migrations
                     b.Property<int>("ParcelId")
                         .HasColumnType("int");
 
-                    b.Property<double>("ParcelLatitude")
-                        .HasColumnType("float");
-
-                    b.Property<double>("ParcelLongitude")
-                        .HasColumnType("float");
+                    b.Property<int>("ParcelSize")
+                        .HasColumnType("int");
 
                     b.Property<bool>("Posted")
                         .HasColumnType("bit");
+
+                    b.Property<double>("TotalTravelTime")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TravelTimeToParcel")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TravelTimeToRecipient")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -136,10 +148,10 @@ namespace Courier.DataLayer.Migrations
                         .HasColumnType("int")
                         .UseIdentityColumn();
 
-                    b.Property<double>("Latitude")
+                    b.Property<double>("ParcelLatitude")
                         .HasColumnType("float");
 
-                    b.Property<double>("Longitude")
+                    b.Property<double>("ParcelLongitude")
                         .HasColumnType("float");
 
                     b.Property<Guid>("ParcelNumber")
@@ -154,6 +166,12 @@ namespace Courier.DataLayer.Migrations
                     b.Property<int?>("RecipientId")
                         .HasColumnType("int");
 
+                    b.Property<double>("RecipientLatitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("RecipientLongitude")
+                        .HasColumnType("float");
+
                     b.Property<DateTime>("RegisterDate")
                         .HasColumnType("datetime2");
 
@@ -163,6 +181,8 @@ namespace Courier.DataLayer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RecipientId");
+
+                    b.HasIndex("SenderId");
 
                     b.ToTable("Parcels");
                 });
@@ -205,7 +225,15 @@ namespace Courier.DataLayer.Migrations
                         .WithMany()
                         .HasForeignKey("RecipientId");
 
+                    b.HasOne("Courier.DataLayer.Models.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Recipient");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Courier.DataLayer.Models.User", b =>

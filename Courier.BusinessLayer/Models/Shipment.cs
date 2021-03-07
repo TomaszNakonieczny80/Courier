@@ -7,7 +7,7 @@ namespace Courier.BusinessLayer.Models
     public class Shipment
     {
         public Guid ParcelNumber { get; set; }
-        public int DriverId { get; set; }
+        public int? CarId { get; set; }
         public DateTime RegisterDate { get; set; }
 
     }

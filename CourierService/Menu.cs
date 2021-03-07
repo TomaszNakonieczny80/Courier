@@ -4,7 +4,14 @@ using System.Text;
 
 namespace Courier
 {
-    class Menu
+    public interface IMenu
+    {
+        void AddOption(MenuItem item);
+        void ClearOption();
+        void ExecuteOption(int optionKey);
+        void PrintAvailableOptions();
+    }
+    public class Menu : IMenu
     {
         private Dictionary<int, MenuItem> _options = new Dictionary<int, MenuItem>();
 

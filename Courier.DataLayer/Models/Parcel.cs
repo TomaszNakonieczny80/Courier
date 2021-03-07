@@ -15,6 +15,8 @@ namespace Courier.DataLayer.Models
     {
         WaitingToBePosted,
         Posted,
+        OnTheWay,
+        Delivered,
     }
 
 
@@ -24,10 +26,14 @@ namespace Courier.DataLayer.Models
         public Guid ParcelNumber { get; set; }
         public User Recipient { get; set; }
         public int SenderId { get; set; }
+        public User Sender { get; set; }
         public ParcelSize ParcelSize { get; set; }
         public DateTime RegisterDate { get; set; }
         public ParcelStatus ParcelStatus { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        public double ParcelLatitude { get; set; }
+        public double ParcelLongitude { get; set; }
+        public double RecipientLatitude { get; set; }
+        public double RecipientLongitude { get; set; }
+
     }
 }
