@@ -9,9 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Courier.DataLayer", "Courie
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Courier", "CourierService\Courier.csproj", "{4B01FF88-C984-4F34-A843-0486E743746D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Courier.NotificationsSender", "Courier.NotificationsSender\Courier.NotificationsSender.csproj", "{E7594107-F3EF-4361-B710-25809444C59B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Courier.NotificationsSender", "Courier.NotificationsSender\Courier.NotificationsSender.csproj", "{E7594107-F3EF-4361-B710-25809444C59B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Courier.Tests", "Courier.Tests\Courier.Tests.csproj", "{08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Courier.Tests", "Courier.Tests\Courier.Tests.csproj", "{08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Courier.WebApi", "Courier.WebApi\Courier.WebApi.csproj", "{6F32C633-D88B-4835-B863-10B1C9B2E7AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Courier.WebApi.Client", "Courier.WebApi.Client\Courier.WebApi.Client.csproj", "{CBEE2155-F225-43A6-B00B-F17B524EE32B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,14 @@ Global
 		{08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08F5C4F4-68DB-42DC-AF21-4DC4E04DE4CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F32C633-D88B-4835-B863-10B1C9B2E7AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F32C633-D88B-4835-B863-10B1C9B2E7AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F32C633-D88B-4835-B863-10B1C9B2E7AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F32C633-D88B-4835-B863-10B1C9B2E7AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBEE2155-F225-43A6-B00B-F17B524EE32B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBEE2155-F225-43A6-B00B-F17B524EE32B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBEE2155-F225-43A6-B00B-F17B524EE32B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBEE2155-F225-43A6-B00B-F17B524EE32B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

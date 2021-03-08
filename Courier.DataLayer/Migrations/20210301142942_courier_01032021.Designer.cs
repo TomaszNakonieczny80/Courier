@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Courier.DataLayer.Migrations
 {
     [DbContext(typeof(ParcelsDbContext))]
-    [Migration("20210215153214_courie_15022021")]
-    partial class courie_15022021
+    [Migration("20210301142942_courier_01032021")]
+    partial class courier_01032021
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

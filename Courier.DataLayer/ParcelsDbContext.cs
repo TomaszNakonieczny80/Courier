@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Courier.DataLayer.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +14,7 @@ namespace Courier.DataLayer
         public DbSet<Address> Addresses { get; set; }
         public DbSet<CarParcel> CarParcels { get; set; }
 
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         int SaveChanges();
     }
     public class ParcelsDbContext : DbContext, IParcelsDbContext
@@ -25,7 +28,7 @@ namespace Courier.DataLayer
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=.;Database=HW5_20210215_CourierOperations;Trusted_Connection=True");
+            optionsBuilder.UseSqlServer(@"Server=.;Database=HW6_20210301_CourierOperations;Trusted_Connection=True");
         }
     }
 }

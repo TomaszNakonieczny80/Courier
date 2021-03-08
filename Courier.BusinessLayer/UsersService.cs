@@ -4,20 +4,23 @@ using System.Text;
 using Courier.DataLayer;
 using Courier.DataLayer.Models;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace Courier.BusinessLayer
 {
     public interface IUsersService
     {
-        void Add(User user);
+        Task AddAsync(User user);
         bool CheckIfDriver(int userId);
         bool CheckIfPasswordIsCorrect(string userPassword);
         bool CheckIfUserExist(string userEmail);
+        Task<User> GetCustomerIdAsync(string userEmail, string password);
+        Task<User> GetCourierIdAsync(string userEmail, string password);
         double GetLatitude(int userId);
         double GetLongitude(int userId);
         User GetUser(int userId);
-        int GetUserId(string userEmail);
+        Task<User> GetUserIdAsync(string userEmail);
     }
     public class UsersService : IUsersService
     {
@@ -28,12 +31,12 @@ namespace Courier.BusinessLayer
             _dbContextFactoryMethod = dbContextFactoryMethod;
         }
 
-        public void Add(User user)
+        public async Task AddAsync(User user)
         {
             using (var context = _dbContextFactoryMethod())
             {
                 context.Users.Add(user);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
@@ -76,11 +79,37 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public int GetUserId(string userEmail)
+        public async Task<User> GetUserIdAsync(string userEmail)
         {
             using (var context = _dbContextFactoryMethod())
             {
-                var userId = context.Users.FirstOrDefault(user => user.Email == userEmail).Id;
+                var user = await context.Users.
+                    AsQueryable().
+                    FirstOrDefaultAsync(user => user.Email == userEmail);
+               return user;
+            }
+        }
+
+        public async Task<User> GetCourierIdAsync(string userEmail, string password)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var userId = await context.Users
+                    .AsQueryable()
+                    .FirstOrDefaultAsync(user => user.Email == userEmail & user.Password == password & user.UserType == UserType.Driver);
+                
+                return userId;
+            }
+        }
+
+        public async Task<User> GetCustomerIdAsync(string userEmail, string password)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var userId = await context.Users
+                    .AsQueryable()
+                    .FirstOrDefaultAsync(user => user.Email == userEmail & user.Password == password);
+
                 return userId;
             }
         }

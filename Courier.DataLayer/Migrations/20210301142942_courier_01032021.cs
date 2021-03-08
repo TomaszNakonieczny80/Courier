@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Courier.DataLayer.Migrations
 {
-    public partial class courie_15022021 : Migration
+    public partial class courier_01032021 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

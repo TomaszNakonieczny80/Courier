@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Newtonsoft.Json;
 using EventData = EventStore.Client.EventData;
 
-namespace BookStore.BusinessLayer
+namespace Courier.BusinessLayer
 {
     public interface INotificationsService
     {
@@ -26,6 +26,7 @@ namespace BookStore.BusinessLayer
 
             using (var client = new EventStoreClient(settings))
             {
+                
                 client.AppendToStreamAsync(
                     stream,
                     StreamState.Any,
