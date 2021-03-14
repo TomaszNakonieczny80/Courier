@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Courier.BusinessLayer.Models;
 using Courier.DataLayer;
-using Courier.DataLayer.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Courier.BusinessLayer.Serializers;
+using Courier.DataLayer.Models;
+
 
 namespace Courier.BusinessLayer
 {
@@ -27,14 +27,14 @@ namespace Courier.BusinessLayer
         void SetParcelsAsDelivered(List<Parcel> parcelsOnTheWay);
         List<Car> GetAvailableCars();
         Task CreateCarParcelsBaseAsync();
-        List<Shipment> AttachDriverToParcel();
+        List<DataLayer.Models.Shipment> AttachDriverToParcels();
         List<int> GetListCarParcelId(int? carId);
         uint GetAvailableCapcity(int? carId);
         void Update(CarParcel carParcel);
         void Update(Parcel parcel);
         bool AvailableCars();
         void GenerateShipmentList();
-        Task <List<Shipment>> GenerateShipmentListAsync(int courierId);
+        Task <List<DataLayer.Models.Shipment>> GenerateShipmentListAsync(int courierId);
         Task ClearCarParcelBaseAsync();
     }
     public class ParcelsService : IParcelsService
@@ -42,12 +42,14 @@ namespace Courier.BusinessLayer
         private readonly Func<IParcelsDbContext> _dbContextFactoryMethod;
         private ITimeService _timeService;
         private ICarsService _carsService;
+        private IShipmentsService _shipmentsService;
 
-        public ParcelsService(Func<IParcelsDbContext> dbContextFactoryMethod, ITimeService timeService, ICarsService carsService)
+        public ParcelsService(Func<IParcelsDbContext> dbContextFactoryMethod, ITimeService timeService, ICarsService carsService, IShipmentsService shipmentsService)
         {
             _dbContextFactoryMethod = dbContextFactoryMethod;
             _timeService = timeService;
             _carsService = carsService;
+            _shipmentsService = shipmentsService;
         }
 
         public async Task AddAsync(Parcel parcel)
@@ -212,7 +214,7 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public List<Shipment> AttachDriverToParcel()
+        public List<Shipment> AttachDriverToParcels()
         {
             List<Shipment> shipementList = new List<Shipment>();
             
@@ -282,12 +284,16 @@ namespace Courier.BusinessLayer
                         }
                     }
 
-                    shipementList.Add(new Shipment()
+                    Shipment shipment = new Shipment()
                     {
                         ParcelNumber = selectedParcel.ParcelNumber,
                         CarId = carId,
                         RegisterDate = selectedParcel.RegisterDate,
-                    });
+                    };
+
+                    shipementList.Add(shipment);
+                   
+                    _shipmentsService.AddAsync(shipment).Wait();
                 }
             }
 
@@ -304,10 +310,11 @@ namespace Courier.BusinessLayer
         public void GenerateShipmentList()
         {
             CreateCarParcelsBaseAsync().Wait();
-            var shipmentList = AttachDriverToParcel();
+            var shipmentList = AttachDriverToParcels();
             foreach (var courier in shipmentList)
             {
                 List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.CarId == courier.CarId).ToList();
+
 
                 string systemDrivePath = Path.GetPathRoot(Environment.SystemDirectory);
                 string targetPath = $"{systemDrivePath}Shiping_list";
@@ -317,7 +324,6 @@ namespace Courier.BusinessLayer
 
                 string fileName = $"DriverId{courier.CarId}_{date}.json";
                 string filePath = Path.Combine(targetPath, fileName);
-                //  var filePath = $@"C:\GitRepository\Courier\Courier\Shipment_List/DriverId{courier.DriverId}_{date}.json";
 
                 var jsonDataSerializer = new JsonDataSerializer();
                 jsonDataSerializer.Serialize(courierShipmentList, filePath);
@@ -332,7 +338,7 @@ namespace Courier.BusinessLayer
         {
             await CreateCarParcelsBaseAsync();
 
-            var shipmentList = AttachDriverToParcel();
+            var shipmentList = AttachDriverToParcels();
             var carId = _carsService.GetCarId(courierId);
             
             List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.CarId == carId).ToList();

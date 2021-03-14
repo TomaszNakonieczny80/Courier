@@ -5,7 +5,6 @@ using System.Linq;
 using System.Timers;
 using Unity;
 using Courier.BusinessLayer;
-using Courier.BusinessLayer.Models;
 using Courier.BusinessLayer.Serializers;
 using Courier.DataLayer.Models;
 using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;

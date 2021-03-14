@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Courier.BusinessLayer.Models;
+using Courier.DataLayer.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 

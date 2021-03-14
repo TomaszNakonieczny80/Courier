@@ -4,14 +4,16 @@ using Courier.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Courier.DataLayer.Migrations
 {
     [DbContext(typeof(ParcelsDbContext))]
-    partial class ParcelsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210314121623_courr_2021031")]
+    partial class courr_2021031
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

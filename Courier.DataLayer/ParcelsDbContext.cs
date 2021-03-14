@@ -13,6 +13,7 @@ namespace Courier.DataLayer
         public DbSet<Car> Cars { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<CarParcel> CarParcels { get; set; }
+        public DbSet<Shipment> Shipments { get; set; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         int SaveChanges();
@@ -24,6 +25,7 @@ namespace Courier.DataLayer
         public DbSet<Car> Cars { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<CarParcel> CarParcels { get; set; }
+        public DbSet<Shipment> Shipments { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

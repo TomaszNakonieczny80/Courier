@@ -16,8 +16,9 @@ namespace Courier.Tests.BusinessLayer
         private Mock<IParcelsService> _parcelServiceMock;
         private ITimeService _timeService;
         private ICarsService _carsService;
+        private IShipmentsService _shipmentsService;
 
-        [SetUp]
+            [SetUp]
         public void SetUp()
         {
 
@@ -57,7 +58,7 @@ namespace Courier.Tests.BusinessLayer
         public void GetAllCarParcels_CorrectList()
         {
             
-            var sut = new ParcelsService(_contextFactoryMethod, _timeService, _carsService);
+            var sut = new ParcelsService(_contextFactoryMethod, _timeService, _carsService, _shipmentsService);
 
             var result = sut.GetAllCarParcel();
 
@@ -68,7 +69,7 @@ namespace Courier.Tests.BusinessLayer
         public void GetCarId_CorrectCarId()
         {
             var carParcelId = 1;
-            var sut = new ParcelsService(_contextFactoryMethod, _timeService, _carsService);
+            var sut = new ParcelsService(_contextFactoryMethod, _timeService, _carsService, _shipmentsService);
 
             var result = sut.GetCarParcelId(carParcelId);
 
