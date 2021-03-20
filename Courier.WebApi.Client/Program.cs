@@ -122,11 +122,18 @@ namespace Courier.WebApi.Client
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseObject = JsonConvert.DeserializeObject<List<Shipment>>(responseText);
-                    Console.WriteLine($"Success. Response content: ");
-                    foreach (var parcel in responseObject)
+                    if (responseText == null)
                     {
-                        PrintShipmentList(parcel);
+                        Console.WriteLine("\nYou don't have any parcel attached to delivery");
+                    }
+                    else
+                    {
+                        var responseObject = JsonConvert.DeserializeObject<List<Shipment>>(responseText);
+                        Console.WriteLine($"Success. Response content: ");
+                        foreach (var parcel in responseObject)
+                        {
+                            PrintShipmentList(parcel);
+                        }
                     }
                 }
                 else

@@ -23,9 +23,6 @@ namespace Courier
         private ITimeService _timeService;
         private INotificationsService _notificationService;
         private int _userId;
-
-
-
         private bool _exit = false;
 
         static void Main()
@@ -58,6 +55,7 @@ namespace Courier
 
         void Run()
         {
+            _parcelsService.SetRaportDate();
             SetTimer();
             _databaseManagementService.EnsureDatabaseCreation();
           
@@ -102,19 +100,22 @@ namespace Courier
             _menu.ClearOption();
             _menu.AddOption(new MenuItem { Key = 1, Action = AddParcel, Description = "Add parcel" });
             _menu.AddOption(new MenuItem { Key = 2, Action = AddCourierCar, Description = "Add courier car" });
+
+         //   _menu.AddOption(new MenuItem { Key = 5, Action = GenerateShipmentListCourier, Description = "GenerateShipementList" });
+            _menu.AddOption(new MenuItem { Key = 5, Action = GenerateShipmentListCourier, Description = "GenerateShipementListWeb" });
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
         }
 
         private void SetTimer()
         {
             var timeNow = _timeService.currentTime();
-            var delta = timeNow.Date.AddDays(1) - timeNow;
+            var delta = _parcelsService.SetRaportDate() - timeNow;
             var deltaMilisec = delta.TotalMilliseconds;
             var eightHoursMilisec = 28800000;
             var eighteenHoursMilisec = 64800000;
 
             Timer aTimerForRaport = new Timer();
-            aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipementRaport);
+            aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipmentRaport);
 
             aTimerForRaport.Interval = deltaMilisec / 60;
             aTimerForRaport.Enabled = true;
@@ -131,17 +132,39 @@ namespace Courier
             aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 60;
             aTimerForStopDelivery.Enabled = true;
 
+            Timer aTimerForClearShipmentList = new Timer();
+            aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(ClearShipmentList);
+
+            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 60;
+            aTimerForStopDelivery.Enabled = true;
 
         }
 
-        private void ShipementRaport(object source, ElapsedEventArgs e)
+        private void ShipmentRaport(object source, ElapsedEventArgs e)
         {
-            GenerateShipmentList();
+            _parcelsService.GenerateShipmentList();
+        }
+
+        private void ClearShipmentList(object source, ElapsedEventArgs e)
+        {
+            _parcelsService.ClearShipmentList();
         }
 
         private void SetStatusAsOnTheWay(object source, ElapsedEventArgs e)
         {
             _parcelsService.SetParcelsAsOnTheWay();
+        }
+
+        private void GenerateShipmentListWeb()
+        {
+            //if (!_parcelsService.ExistShipmentList())
+            //{
+            //    Console.WriteLine("Manually generator of Shipment list is available only between 00:00-08:00 hours");
+            //}
+
+            _parcelsService.GenerateShipmentListAsync(_userId).Wait();
+
+        //  SetParcelAsManualUpdate();
         }
 
         private void SetStatusOnDelivered(object source, ElapsedEventArgs e)
@@ -153,10 +176,15 @@ namespace Courier
             }
             _parcelsService.SetParcelsAsDelivered(parcelsOnTheWay);
         }
-     
-        void GenerateShipmentList()
+
+        void GenerateShipementList()
         {
-          _parcelsService.GenerateShipmentList();
+            _parcelsService.GenerateShipmentList();
+
+        }
+        void GenerateShipmentListCourier()
+        {
+            _parcelsService.GenerateShipmentListAsync(6);
         }
 
         void AddParcel()
