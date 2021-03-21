@@ -1,12 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace Courier.BusinessLayer
+namespace Courier.WebApi.Client
 {
-    public interface ITimeService
-    {
-        DateTime currentTime();
-    }
-    public class TimeService : ITimeService
+    public class TimeService
     {
         public DateTime currentTime()
         {
@@ -14,7 +12,7 @@ namespace Courier.BusinessLayer
             var now = DateTime.Now;
 
             var different = now - start;
-            var timeSpan =  different.TotalSeconds * 60;
+            var timeSpan = different.TotalSeconds * 60;
 
             var newTimeSpan = TimeSpan.FromSeconds(timeSpan);
 

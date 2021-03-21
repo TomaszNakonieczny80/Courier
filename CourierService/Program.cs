@@ -101,8 +101,8 @@ namespace Courier
             _menu.AddOption(new MenuItem { Key = 1, Action = AddParcel, Description = "Add parcel" });
             _menu.AddOption(new MenuItem { Key = 2, Action = AddCourierCar, Description = "Add courier car" });
 
-         //   _menu.AddOption(new MenuItem { Key = 5, Action = GenerateShipmentListCourier, Description = "GenerateShipementList" });
-            _menu.AddOption(new MenuItem { Key = 5, Action = GenerateShipmentListCourier, Description = "GenerateShipementListWeb" });
+            _menu.AddOption(new MenuItem { Key = 5, Action = ShipmentRaport, Description = "ShipmentRaport" });
+            _menu.AddOption(new MenuItem { Key = 6, Action = GenerateShipmentListWeb, Description = "GenerateShipementListWeb" });
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
         }
 
@@ -113,36 +113,42 @@ namespace Courier
             var deltaMilisec = delta.TotalMilliseconds;
             var eightHoursMilisec = 28800000;
             var eighteenHoursMilisec = 64800000;
+            var timeMultiplier = 300;
 
             Timer aTimerForRaport = new Timer();
             aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipmentRaport);
 
-            aTimerForRaport.Interval = deltaMilisec / 60;
+            aTimerForRaport.Interval = deltaMilisec / timeMultiplier;
             aTimerForRaport.Enabled = true;
 
             Timer aTimerForStartDelivery = new Timer();
             aTimerForStartDelivery.Elapsed += new ElapsedEventHandler(SetStatusAsOnTheWay);
 
-            aTimerForStartDelivery.Interval = (deltaMilisec + eightHoursMilisec) / 60;
+            aTimerForStartDelivery.Interval = (deltaMilisec + eightHoursMilisec) / timeMultiplier;
             aTimerForStartDelivery.Enabled = true;
 
             Timer aTimerForStopDelivery = new Timer();
             aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(SetStatusOnDelivered);
 
-            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 60;
+            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / timeMultiplier;
             aTimerForStopDelivery.Enabled = true;
 
-            Timer aTimerForClearShipmentList = new Timer();
-            aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(ClearShipmentList);
+            //Timer aTimerForClearShipmentList = new Timer();
+            //aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(ClearShipmentList);
 
-            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 60;
-            aTimerForStopDelivery.Enabled = true;
+            //aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 60;
+            //aTimerForStopDelivery.Enabled = true;
 
         }
 
         private void ShipmentRaport(object source, ElapsedEventArgs e)
         {
-            _parcelsService.GenerateShipmentList();
+            _parcelsService.GenerateShipmentListsAsync().Wait();
+        }
+
+        private void ShipmentRaport()
+        {
+            _parcelsService.GenerateShipmentListsAsync().Wait();
         }
 
         private void ClearShipmentList(object source, ElapsedEventArgs e)
@@ -162,7 +168,7 @@ namespace Courier
             //    Console.WriteLine("Manually generator of Shipment list is available only between 00:00-08:00 hours");
             //}
 
-            _parcelsService.GenerateShipmentListAsync(_userId).Wait();
+            _parcelsService.GetShipmentListAsync(_userId).Wait();
 
         //  SetParcelAsManualUpdate();
         }
@@ -177,14 +183,9 @@ namespace Courier
             _parcelsService.SetParcelsAsDelivered(parcelsOnTheWay);
         }
 
-        void GenerateShipementList()
-        {
-            _parcelsService.GenerateShipmentList();
-
-        }
         void GenerateShipmentListCourier()
         {
-            _parcelsService.GenerateShipmentListAsync(6);
+            _parcelsService.GetShipmentListAsync(6);
         }
 
         void AddParcel()

@@ -18,9 +18,9 @@ namespace Courier.BusinessLayer
         List<Parcel> GetParcelsOnTheWay();
         void SetParcelsAsOnTheWay();
         void SetParcelsAsDelivered(List<Parcel> parcelsOnTheWay);
-        void GenerateShipmentList();
+        Task GenerateShipmentListsAsync();
         DateTime SetRaportDate();
-        Task <List<Shipment>> GenerateShipmentListAsync(int courierId);
+        Task <List<Shipment>> GetShipmentListAsync(int courierId);
         bool ExistShipmentList();
         void ClearShipmentList();
     }
@@ -233,7 +233,6 @@ namespace Courier.BusinessLayer
                             Full = false,
                             Posted = false
                         };
-                        
 
                         await AddAsync(carParcel);
                     }
@@ -317,29 +316,20 @@ namespace Courier.BusinessLayer
                         }
                     }
 
-                    
-                    //double travelTimeToParcelMinutes = selectedCarParcel.TravelTimeToParcel * 60;
-                    //double travelTimeToRecipienMinutes = selectedCarParcel.TravelTimeToRecipient * 60;
-
-                    //var schedulePickUpDate = startDate.AddMinutes(travelTimeToParcelMinutes);
-                    //var backToBaseWithParcelDate = startDate.AddMinutes(travelTimeToParcelMinutes * 2);
-                    //var scheduleDeliveryDate = backToBaseWithParcelDate.AddMinutes(travelTimeToRecipienMinutes);
-                    //var backToBaseFromRecipientDate = backToBaseWithParcelDate.AddMinutes(travelTimeToParcelMinutes * 2);
-
-                    //startDate = backToBaseFromRecipientDate;
-
                     Shipment shipment = new Shipment()
                     {
                         ParcelNumber = selectedParcel.ParcelNumber,
+                        ParcelId = selectedParcel.Id,
                         CarId = carId,
                         RegisterDate = selectedParcel.RegisterDate,
+                        DistanceToParcel = selectedCarParcel.DistanceToParcel,
                         TravelTimeToParcel = selectedCarParcel.TravelTimeToParcel,
+                        DistanceToRecipient = selectedCarParcel.TravelTimeToRecipient,
                         TravelTimeToRecipient = selectedCarParcel.TravelTimeToRecipient,
-                        //ScheduledPickUpTime = schedulePickUpDate,
-                        //ScheduledDeliveryTime = scheduleDeliveryDate,
+                        New = true,
+                        CurrentShipment = true,
                     };
 
-                    
                     shipementList.Add(shipment);
                    
                     _shipmentsService.AddAsync(shipment).Wait();
@@ -360,37 +350,18 @@ namespace Courier.BusinessLayer
                 await RemoveAsync(carParcel);
             }
         }
-        public void GenerateShipmentList()
+        public async Task GenerateShipmentListsAsync()
         {
             CreateCarParcelsBaseAsync().Wait();
             var shipmentList = AttachDriverToParcels();
             _shipmentList = shipmentList;
 
-            GenerateShipementListPerCourier(shipmentList);
-            //foreach (var courier in shipmentList)
-            //{
-            //    List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.CarId == courier.CarId).ToList();
-
-
-            //    string systemDrivePath = Path.GetPathRoot(Environment.SystemDirectory);
-            //    string targetPath = $"{systemDrivePath}Shiping_list";
-            //    Directory.CreateDirectory(targetPath);
-
-            //    var date = _timeService.currentTime().ToString(("MM-dd-yyyy"));
-
-            //    string fileName = $"DriverId{courier.CarId}_{date}.json";
-            //    string filePath = Path.Combine(targetPath, fileName);
-
-            //    var jsonDataSerializer = new JsonDataSerializer();
-            //    jsonDataSerializer.Serialize(courierShipmentList, filePath);
-            //}
-
-            //po wygenerowaniu raportu czyszcze tablice carParcel,
-            //paczki nie przypisane beda uwzgleniane w kolejnym raporcie na pierwszym m-cu
-            ClearCarParcelBaseAsync().Wait();
+            SerializeShipementList(shipmentList);
+           
+            await ClearCarParcelBaseAsync();
         }
 
-        public void GenerateShipementListPerCourier(List<Shipment> shipmentList)
+        public void SerializeShipementList(List<Shipment> shipmentList)
         {
             foreach (var courier in shipmentList)
             {
@@ -411,49 +382,32 @@ namespace Courier.BusinessLayer
             }
         }
 
-        //public async Task<List<Shipment>> GenerateShipmentListAsync(int courierId)
-        //{
-        //    await CreateCarParcelsBaseAsync();
-
-        //    var shipmentList = AttachDriverToParcels();
-        //    var carId = _carsService.GetCarId(courierId);
-
-        //    List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.CarId == carId).ToList();
-
-        //    _shipmentsService.CreateDeliverySchedule(courierShipmentList);
-
-        //    await ClearCarParcelBaseAsync();
-        //    return courierShipmentList;
-        //}
-
-        public async Task<List<Shipment>> GenerateShipmentListAsync(int courierId)
+        public async Task<List<Shipment>> GetShipmentListAsync(int courierId)
         {
             var carId = _carsService.GetCarId(courierId);
-            List<Shipment> courierShipementList = null;
-
+           
+            List<Shipment> courierShipmentList = new List<Shipment>();
+            
             var parcelsNotServed = GetCourierParcelsNotServed(carId);
+            
             if (parcelsNotServed.Count != 0)
             {
-                List<Shipment> courierShipmentList = _shipmentList.Where(shipment => shipment.CarId == carId).ToList();
+
+                courierShipmentList = _shipmentsService.GetShipmentList(parcelsNotServed);
 
                 _shipmentsService.CreateDeliverySchedule(courierShipmentList);
 
                 foreach (var parcel in parcelsNotServed)
                 {
                     parcel.DeliveredAutomatically = false;
+                    parcel.ParcelStatus = ParcelStatus.OnTheWay;
                     await UpdateAsync(parcel);
                 }
 
-                var dupa = new Shipment
-                {
-                    CarId = 1,
-                };
-
-                courierShipementList.Add(dupa);
                 return courierShipmentList;
             }
 
-            return courierShipementList;
+            return courierShipmentList;
         }
 
         public List<Parcel> GetCourierParcelsNotServed(int carId)

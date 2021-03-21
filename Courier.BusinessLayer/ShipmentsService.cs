@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Courier.DataLayer;
@@ -11,6 +12,8 @@ namespace Courier.BusinessLayer
     {
         Task AddAsync(Shipment shipment);
         void CreateDeliverySchedule(List<Shipment> courierShipmentList);
+      //  void CreateDeliverySchedule(Shipment shipment, CarParcel carParcel, DateTime raportDate);
+        List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe);
     }
 
     public class ShipmentsService : IShipmentsService
@@ -23,7 +26,6 @@ namespace Courier.BusinessLayer
             _dbContextFactoryMethod = dbContextFactoryMethod;
             _timeService = timeService;
         }
-
         public DateTime SetRaportDate()
         {
             var raportDate = _timeService.currentTime().Date.AddDays(1);
@@ -34,18 +36,17 @@ namespace Courier.BusinessLayer
 
         public async Task AddAsync(Shipment shipment)
         {
-           
             using (var context = _dbContextFactoryMethod())
             {
                 context.Shipments.Add(shipment);
                 await context.SaveChangesAsync();
             }
-
         }
 
         public void CreateDeliverySchedule(List<Shipment> courierShipmentList)
         {
-            DateTime startDate = _raportDate.AddHours(8);
+            DateTime startDate = SetRaportDate().AddHours(8);
+           // DateTime startDate = _timeService.currentTime().AddHours(8);
             
             foreach (var shipment in courierShipmentList)
             {
@@ -56,15 +57,53 @@ namespace Courier.BusinessLayer
                 var backToBaseWithParcelDate = startDate.AddMinutes(travelTimeToParcelMinutes * 2);
                 var scheduledDeliveryDate = backToBaseWithParcelDate.AddMinutes(travelTimeToRecipienMinutes);
                 var backToBaseFromRecipientDate = backToBaseWithParcelDate.AddMinutes(travelTimeToParcelMinutes * 2);
+                
                 startDate = backToBaseFromRecipientDate;
 
                 shipment.ScheduledPickUpTime = scheduledPickUpDate;
                 shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
-
+                shipment.New = false;
+                
                 Update(shipment);
             }
-
         }
+
+        //public void CreateDeliverySchedule(Shipment shipment, CarParcel carParcel, DateTime raportDate)
+        //{
+        //    DateTime startDate = raportDate.AddHours(8);
+
+        
+        //    double travelTimeToParcelMinutes = carParcel.TravelTimeToParcel * 60;
+        //    double travelTimeToRecipienMinutes = carParcel.TravelTimeToRecipient * 60;
+
+        //    var scheduledPickUpDate = startDate.AddMinutes(travelTimeToParcelMinutes);
+        //    var backToBaseWithParcelDate = startDate.AddMinutes(travelTimeToParcelMinutes * 2);
+        //    var scheduledDeliveryDate = backToBaseWithParcelDate.AddMinutes(travelTimeToRecipienMinutes);
+        //    var backToBaseFromRecipientDate = backToBaseWithParcelDate.AddMinutes(travelTimeToParcelMinutes * 2);
+
+        //    startDate = backToBaseFromRecipientDate;
+
+        //    shipment.ScheduledPickUpTime = scheduledPickUpDate;
+        //    shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
+            
+        //    Update(shipment);
+        //}
+
+        public List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe)
+        {
+            List<Shipment> shipmentList = new List<Shipment>();
+            foreach (var parcel in parcelsNotServe)
+            {
+                using (var context = _dbContextFactoryMethod())
+                {
+                    var shipment = context.Shipments.AsQueryable().FirstOrDefault(shipment => shipment.ParcelId == parcel.Id);
+                    shipmentList.Add(shipment);
+                }
+            }
+
+            return shipmentList;
+        }
+
 
         public void Update(Shipment shipment)
         {

@@ -25,7 +25,15 @@ namespace Courier.WebApi.Controllers
         [HttpGet("{userId}")]
         public async Task<List<Shipment>> GetShipmentList(int userId)
         {
-            return await _parcelsService.GenerateShipmentListAsync(userId);
+            return await _parcelsService.GetShipmentListAsync(userId);
         }
+
+        [HttpPost]
+        public async Task PostGenerateShipmentLists()
+        {
+            await _parcelsService.GenerateShipmentListsAsync();
+        }
+
+
     }
 }

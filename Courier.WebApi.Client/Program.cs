@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Timers;
 using Courier.WebApi.Client.Model;
 using Newtonsoft.Json;
 
@@ -18,6 +19,8 @@ namespace Courier.WebApi.Client
 
         private void Run()
         {
+            SetTimer();
+
             Console.WriteLine("Available options:");
             Console.WriteLine("\n1. Login");
             Console.WriteLine("2. Exit");
@@ -63,6 +66,23 @@ namespace Courier.WebApi.Client
                         break;
                 }
             }
+        }
+
+        private void SetTimer()
+        {
+            var timeService = new TimeService();
+            var timeNow = timeService.currentTime();
+            var delta = timeNow.Date.AddDays(1) - timeNow;
+            var deltaMilisec = delta.TotalMilliseconds;
+            var eightHoursMilisec = 28800000;
+            var eighteenHoursMilisec = 64800000;
+            var timeMultiplier = 600;
+
+            Timer aTimerForRaport = new Timer();
+            aTimerForRaport.Elapsed += new ElapsedEventHandler(GenerateShipmentReport);
+
+            aTimerForRaport.Interval = deltaMilisec / timeMultiplier;
+            aTimerForRaport.Enabled = true;
         }
 
         private void Exit()
@@ -113,6 +133,24 @@ namespace Courier.WebApi.Client
             }
         }
 
+        public void GenerateShipmentReport(object source, ElapsedEventArgs e)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var response = httpClient.PostAsync($"http://localhost:10500/api/shipmentlist", null).Result;
+                var responseText = response.Content.ReadAsStringAsync().Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("\nNew shipment report was created.");
+                }
+                else
+                {
+                    Console.WriteLine($"Http query failure. Status code: {response.StatusCode}");
+                }
+            }
+        }
+
         private void DownloadShipmentList()
         {
             using (var httpClient = new HttpClient())
@@ -122,7 +160,7 @@ namespace Courier.WebApi.Client
 
                 if (response.IsSuccessStatusCode)
                 {
-                    if (responseText == null)
+                    if (responseText == "[]")
                     {
                         Console.WriteLine("\nYou don't have any parcel attached to delivery");
                     }
@@ -146,7 +184,7 @@ namespace Courier.WebApi.Client
 
         private void PrintShipmentList(Shipment shipment)
         {
-            Console.WriteLine($"CarId: {shipment.CarId}, ParcelNumber: {shipment.ParcelNumber}, RegisterDate: {shipment.RegisterDate}");
+            Console.WriteLine($"CarId: {shipment.CarId}, ParcelId: {shipment.ParcelId} ParcelNumber: {shipment.ParcelNumber}, RegisterDate: {shipment.RegisterDate}");
         }
 
         private string GetTextFromUser(string message)
