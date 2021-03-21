@@ -12,6 +12,7 @@ namespace Courier.WebApi.Client
     class Program
     {
         private int _userId;
+        private List<Shipment> _shipments;
         static void Main(string[] args)
         {
             new Program().Run();
@@ -46,8 +47,12 @@ namespace Courier.WebApi.Client
         private void Menu()
         {
             Console.WriteLine("\nAvailable options:");
-            Console.WriteLine("\n1. Download Shipment list");
-            Console.WriteLine("2. Exit");
+            Console.WriteLine("\n1. Download shipment list");
+            Console.WriteLine("2. Download shimpent schedule");
+            Console.WriteLine("3. Set parcel as picked up");
+            Console.WriteLine("4. Set parcel as delivered");
+         //   Console.WriteLine("\n5. Download Shipment list");
+            Console.WriteLine("6. Exit");
 
             while (true)
             {
@@ -59,6 +64,18 @@ namespace Courier.WebApi.Client
                         DownloadShipmentList();
                         break;
                     case 2:
+                        DownloadShimpentSchedule();
+                        break;
+                    case 3:
+                        SetParcelAsPickedUp();
+                        break;
+                    //case 4:
+                    //    SetParcelAsDelivered;
+                    //    break;
+                    //case 1:
+                    //    DownloadShipmentList();
+                    //    break;
+                    case 6:
                         Exit();
                         break;
                     default:
@@ -151,40 +168,134 @@ namespace Courier.WebApi.Client
             }
         }
 
-        private void DownloadShipmentList()
+        public void SetParcelAsPickedUp()
         {
+            var parcelId = GetIntFromUser("\nEnter parcel Id");
+
             using (var httpClient = new HttpClient())
             {
-                var response = httpClient.GetAsync(@$"http://localhost:10500/api/shipmentlist/{_userId}").Result;
+                var response = httpClient.PostAsync($"http://localhost:10500/api/shipmentlist/pickedup/{parcelId}", null).Result;
                 var responseText = response.Content.ReadAsStringAsync().Result;
 
                 if (response.IsSuccessStatusCode)
                 {
-                    if (responseText == "[]")
+                    if (responseText == "0")
                     {
-                        Console.WriteLine("\nYou don't have any parcel attached to delivery");
+                        Console.WriteLine("\nWrong number or parcel doesn't exist");
                     }
                     else
                     {
-                        var responseObject = JsonConvert.DeserializeObject<List<Shipment>>(responseText);
-                        Console.WriteLine($"Success. Response content: ");
-                        foreach (var parcel in responseObject)
-                        {
-                            PrintShipmentList(parcel);
-                        }
+                        Console.WriteLine("\nNew shipment report was created.");
                     }
+                    
                 }
                 else
                 {
-                    Console.WriteLine($"Failed. Status code: {response.StatusCode}");
+                    Console.WriteLine($"Http query failure. Status code: {response.StatusCode}");
+                }
+            }
+        }
+
+       
+        private void DownloadShipmentList()
+        {
+            if (_shipments == null)
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    var response = httpClient.GetAsync(@$"http://localhost:10500/api/shipmentlist/{_userId}").Result;
+                    var responseText = response.Content.ReadAsStringAsync().Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        if (responseText == "[]")
+                        {
+                            Console.WriteLine("\nYou don't have any parcel attached to delivery");
+                            _shipments = null;
+                        }
+                        else
+                        {
+                            var responseObject = JsonConvert.DeserializeObject<List<Shipment>>(responseText);
+                            Console.WriteLine($"Success. Response content: ");
+                            foreach (var parcel in responseObject)
+                            {
+                                PrintShipmentList(parcel);
+                            }
+
+                            _shipments = responseObject;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed. Status code: {response.StatusCode}");
+                    }
+                }
+                
+            }
+
+            else
+            {
+                Console.WriteLine($"Success. Response content: ");
+                foreach (var parcel in _shipments)
+                {
+                    PrintShipmentList(parcel);
+                }
+            }
+        }
+
+        private void DownloadShimpentSchedule()
+        {
+            if (_shipments == null)
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    var response = httpClient.GetAsync(@$"http://localhost:10500/api/shipmentlist/{_userId}").Result;
+                    var responseText = response.Content.ReadAsStringAsync().Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        if (responseText == "[]")
+                        {
+                            Console.WriteLine("\nYou don't have any parcel attached to delivery");
+                            _shipments = null;
+                        }
+                        else
+                        {
+                            var responseObject = JsonConvert.DeserializeObject<List<Shipment>>(responseText);
+                            Console.WriteLine($"Success. Response content: ");
+                            foreach (var parcel in responseObject)
+                            {
+                                PrintShipmentSchedule(parcel);
+                            }
+
+                            _shipments = responseObject;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed. Status code: {response.StatusCode}");
+                    }
                 }
             }
 
+            else
+            {
+                Console.WriteLine($"Success. Response content: ");
+                foreach (var parcel in _shipments)
+                {
+                    PrintShipmentSchedule(parcel);
+                }
+            }
         }
 
         private void PrintShipmentList(Shipment shipment)
         {
-            Console.WriteLine($"CarId: {shipment.CarId}, ParcelId: {shipment.ParcelId} ParcelNumber: {shipment.ParcelNumber}, RegisterDate: {shipment.RegisterDate}");
+            Console.WriteLine($"CarId: {shipment.CarId}, ParcelId: {shipment.ParcelId}, ParcelNumber: {shipment.ParcelNumber}, RegisterDate: {shipment.RegisterDate}");
+        }
+
+        private void PrintShipmentSchedule(Shipment shipment)
+        {
+            Console.WriteLine($"ParcelId: {shipment.ParcelId}, DistanceToParcel: {shipment.DistanceToParcel}km, TravelTimeToParcel: {shipment.TravelTimeToParcel}hours, DistanceToRecipient: {shipment.DistanceToRecipient}km, TravelTimeToRecipient: {shipment.TravelTimeToRecipient}hours");
         }
 
         private string GetTextFromUser(string message)

@@ -12,8 +12,8 @@ namespace Courier.BusinessLayer
     {
         Task AddAsync(Shipment shipment);
         void CreateDeliverySchedule(List<Shipment> courierShipmentList);
-      //  void CreateDeliverySchedule(Shipment shipment, CarParcel carParcel, DateTime raportDate);
         List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe);
+        Task<int> SetPickedUpTimeAsync(int parcelId);
     }
 
     public class ShipmentsService : IShipmentsService
@@ -64,30 +64,9 @@ namespace Courier.BusinessLayer
                 shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
                 shipment.New = false;
                 
-                Update(shipment);
+                UpdateAsync(shipment).Wait();
             }
         }
-
-        //public void CreateDeliverySchedule(Shipment shipment, CarParcel carParcel, DateTime raportDate)
-        //{
-        //    DateTime startDate = raportDate.AddHours(8);
-
-        
-        //    double travelTimeToParcelMinutes = carParcel.TravelTimeToParcel * 60;
-        //    double travelTimeToRecipienMinutes = carParcel.TravelTimeToRecipient * 60;
-
-        //    var scheduledPickUpDate = startDate.AddMinutes(travelTimeToParcelMinutes);
-        //    var backToBaseWithParcelDate = startDate.AddMinutes(travelTimeToParcelMinutes * 2);
-        //    var scheduledDeliveryDate = backToBaseWithParcelDate.AddMinutes(travelTimeToRecipienMinutes);
-        //    var backToBaseFromRecipientDate = backToBaseWithParcelDate.AddMinutes(travelTimeToParcelMinutes * 2);
-
-        //    startDate = backToBaseFromRecipientDate;
-
-        //    shipment.ScheduledPickUpTime = scheduledPickUpDate;
-        //    shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
-            
-        //    Update(shipment);
-        //}
 
         public List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe)
         {
@@ -104,13 +83,31 @@ namespace Courier.BusinessLayer
             return shipmentList;
         }
 
+        public async Task<int> SetPickedUpTimeAsync(int parcelId)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var shipment = context.Shipments.AsQueryable().FirstOrDefault(shipment => shipment.ParcelId == parcelId);
+                
+                if (shipment == null)
+                {
+                    return 0;
+                }
 
-        public void Update(Shipment shipment)
+                shipment.PickedUpTime = _timeService.currentTime();
+                await UpdateAsync(shipment);
+
+                return shipment.ParcelId;
+            }
+        }
+
+
+        public async Task UpdateAsync(Shipment shipment)
         {
             using (var context = _dbContextFactoryMethod())
             {
                 context.Shipments.Update(shipment);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
     }

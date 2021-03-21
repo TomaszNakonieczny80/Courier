@@ -10,10 +10,12 @@ namespace Courier.WebApi.Controllers
     public class ShipmentListsController : ControllerBase
     {
         private readonly IParcelsService _parcelsService;
+        private readonly IShipmentsService _shipmentsService;
 
-        public ShipmentListsController(IParcelsService parcelsService)
+        public ShipmentListsController(IParcelsService parcelsService, IShipmentsService shipmentsService)
         {
             _parcelsService = parcelsService;
+            _shipmentsService = shipmentsService;
         }
 
         /// <summary>
@@ -30,6 +32,18 @@ namespace Courier.WebApi.Controllers
 
         [HttpPost]
         public async Task PostGenerateShipmentLists()
+        {
+            await _parcelsService.GenerateShipmentListsAsync();
+        }
+
+        [HttpPost("pickedup/{parcelId}")]
+        public async Task PostParcelPicedUp(int parcelId)
+        {
+            await _shipmentsService.SetPickedUpTimeAsync(parcelId);
+        }
+
+        [HttpPost("delivered/{parcelId}")]
+        public async Task PostParcelDelivered()
         {
             await _parcelsService.GenerateShipmentListsAsync();
         }
