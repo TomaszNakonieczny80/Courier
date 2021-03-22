@@ -200,7 +200,7 @@ namespace Courier
         private void SetStatusAsOnTheWay(object source, ElapsedEventArgs e)
         {
             _parcelsService.SetParcelsAsOnTheWay();
-            Console.WriteLine("\nParcels served automaticaly are on the way");
+            Console.WriteLine("\nParcels are on the way (applies to automatically handled)");
         }
 
         private void GenerateShipmentListWeb()
@@ -223,7 +223,7 @@ namespace Courier
                 _notificationService.NotifyParcelsDelivered(parcelsOnTheWay);
             }
             _parcelsService.SetParcelsAsDelivered(parcelsOnTheWay);
-            Console.WriteLine("\nParcels served automaticaly have been delivered");
+            Console.WriteLine("\nParcels are delivered (applies to automatically handled");
         }
 
         void GenerateShipmentListCourier()

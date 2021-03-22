@@ -11,7 +11,7 @@ namespace Courier.BusinessLayer
     public interface IShipmentsService
     {
         Task AddAsync(Shipment shipment);
-        void CreateDeliverySchedule(List<Shipment> courierShipmentList);
+        void CreateDeliverySchedule(Shipment shipment, DateTime raportDate);
         List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe);
         Task<int> SetDeliveredTimeAsync(int parcelId);
         Task<int> SetPickedUpTimeAsync(int parcelId);
@@ -44,13 +44,13 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public void CreateDeliverySchedule(List<Shipment> courierShipmentList)
+        public void CreateDeliverySchedule(Shipment shipment, DateTime raportDate)
         {
-            DateTime startDate = SetRaportDate().AddHours(8);
-           // DateTime startDate = _timeService.currentTime().AddHours(8);
+            //DateTime startDate = SetRaportDate().AddHours(8);
+            DateTime startDate = raportDate.AddHours(8);
             
-            foreach (var shipment in courierShipmentList)
-            {
+            //foreach (var shipment in courierShipmentList)
+            //{
                 double travelTimeToParcelMinutes = shipment.TravelTimeToParcel * 60;
                 double travelTimeToRecipienMinutes = shipment.TravelTimeToRecipient * 60;
 
@@ -63,10 +63,9 @@ namespace Courier.BusinessLayer
 
                 shipment.ScheduledPickUpTime = scheduledPickUpDate;
                 shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
-                shipment.New = false;
-                
+
                 UpdateAsync(shipment).Wait();
-            }
+           // }
         }
 
         public List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe)

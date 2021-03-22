@@ -349,6 +349,8 @@ namespace Courier.BusinessLayer
                     selectedParcel.CarId = (int) carId;
                     selectedParcel.DeliveredAutomatically = true;
                     UpdateAsync(selectedParcel).Wait();
+
+                    _shipmentsService.CreateDeliverySchedule(shipment, _raportDate);
                 }
             }
 
@@ -407,7 +409,7 @@ namespace Courier.BusinessLayer
 
                 courierShipmentList = _shipmentsService.GetShipmentList(parcelsNotServed);
 
-                _shipmentsService.CreateDeliverySchedule(courierShipmentList);
+             //   _shipmentsService.CreateDeliverySchedule(courierShipmentList);
 
                 foreach (var parcel in parcelsNotServed)
                 {
