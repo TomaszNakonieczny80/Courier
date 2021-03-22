@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Timers;
@@ -20,7 +21,7 @@ namespace Courier.WebApi.Client
 
         private void Run()
         {
-            SetTimer();
+          //  SetTimer();
 
             Console.WriteLine("Available options:");
             Console.WriteLine("\n1. Login");
@@ -49,7 +50,7 @@ namespace Courier.WebApi.Client
             Console.WriteLine("\nAvailable options:");
             Console.WriteLine("\n1. Download shipment list");
             Console.WriteLine("2. Download shimpent schedule");
-            Console.WriteLine("3. Set parcel as picked up");
+            Console.WriteLine("3. Set picked up time");
             Console.WriteLine("4. Set parcel as delivered");
          //   Console.WriteLine("\n5. Download Shipment list");
             Console.WriteLine("6. Exit");
@@ -67,11 +68,11 @@ namespace Courier.WebApi.Client
                         DownloadShimpentSchedule();
                         break;
                     case 3:
-                        SetParcelAsPickedUp();
+                        SetParcelPickedUpTime();
                         break;
-                    //case 4:
-                    //    SetParcelAsDelivered;
-                    //    break;
+                    case 4:
+                        SetParcelAsDelivered();
+                        break;
                     //case 1:
                     //    DownloadShipmentList();
                     //    break;
@@ -85,22 +86,22 @@ namespace Courier.WebApi.Client
             }
         }
 
-        private void SetTimer()
-        {
-            var timeService = new TimeService();
-            var timeNow = timeService.currentTime();
-            var delta = timeNow.Date.AddDays(1) - timeNow;
-            var deltaMilisec = delta.TotalMilliseconds;
-            var eightHoursMilisec = 28800000;
-            var eighteenHoursMilisec = 64800000;
-            var timeMultiplier = 600;
+        //private void SetTimer()
+        //{
+        //    var timeService = new TimeService();
+        //    var timeNow = timeService.currentTime();
+        //    var delta = timeNow.Date.AddDays(1) - timeNow;
+        //    var deltaMilisec = delta.TotalMilliseconds;
+        //    var eightHoursMilisec = 28800000;
+        //    var eighteenHoursMilisec = 64800000;
+        //    var timeMultiplier = 600;
 
-            Timer aTimerForRaport = new Timer();
-            aTimerForRaport.Elapsed += new ElapsedEventHandler(GenerateShipmentReport);
+        //    Timer aTimerForRaport = new Timer();
+        //    aTimerForRaport.Elapsed += new ElapsedEventHandler(GenerateShipmentReport);
 
-            aTimerForRaport.Interval = deltaMilisec / timeMultiplier;
-            aTimerForRaport.Enabled = true;
-        }
+        //    aTimerForRaport.Interval = deltaMilisec / timeMultiplier;
+        //    aTimerForRaport.Enabled = true;
+        //}
 
         private void Exit()
         {
@@ -150,27 +151,32 @@ namespace Courier.WebApi.Client
             }
         }
 
-        public void GenerateShipmentReport(object source, ElapsedEventArgs e)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                var response = httpClient.PostAsync($"http://localhost:10500/api/shipmentlist", null).Result;
-                var responseText = response.Content.ReadAsStringAsync().Result;
+        //public void GenerateShipmentReport(object source, ElapsedEventArgs e)
+        //{
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        var response = httpClient.PostAsync($"http://localhost:10500/api/shipmentlist", null).Result;
+        //        var responseText = response.Content.ReadAsStringAsync().Result;
 
-                if (response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine("\nNew shipment report was created.");
-                }
-                else
-                {
-                    Console.WriteLine($"Http query failure. Status code: {response.StatusCode}");
-                }
-            }
-        }
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            Console.WriteLine("\nNew shipment report was created.");
+        //        }
+        //        else
+        //        {
+        //            Console.WriteLine($"Http query failure. Status code: {response.StatusCode}");
+        //        }
+        //    }
+        //}
 
-        public void SetParcelAsPickedUp()
+        public void SetParcelPickedUpTime()
         {
             var parcelId = GetIntFromUser("\nEnter parcel Id");
+            if (_shipments == null || _shipments.FirstOrDefault(shipment => shipment.ParcelId == parcelId) == null)
+            {
+                Console.WriteLine("\nWrong Parcel number");
+                return;
+            }
 
             using (var httpClient = new HttpClient())
             {
@@ -185,7 +191,7 @@ namespace Courier.WebApi.Client
                     }
                     else
                     {
-                        Console.WriteLine("\nNew shipment report was created.");
+                        Console.WriteLine("\nPicked up time was set.");
                     }
                     
                 }
@@ -196,7 +202,39 @@ namespace Courier.WebApi.Client
             }
         }
 
-       
+        public void SetParcelAsDelivered()
+        {
+            var parcelId = GetIntFromUser("\nEnter parcel Id");
+            if (_shipments == null || _shipments.FirstOrDefault(shipment => shipment.ParcelId == parcelId) == null)
+            {
+                Console.WriteLine("\nWrong Parcel number");
+                return;
+            }
+
+            using (var httpClient = new HttpClient())
+            {
+                var response = httpClient.PostAsync($"http://localhost:10500/api/shipmentlist/delivered/{parcelId}", null).Result;
+                var responseText = response.Content.ReadAsStringAsync().Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    if (responseText == "0")
+                    {
+                        Console.WriteLine("\nWrong number or parcel doesn't exist");
+                    }
+                    else
+                    {
+                        Console.WriteLine("\nParcel was set as delivered.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Http query failure. Status code: {response.StatusCode}");
+                }
+            }
+        }
+
+
         private void DownloadShipmentList()
         {
             if (_shipments == null)

@@ -23,6 +23,7 @@ namespace Courier.BusinessLayer
         Task <List<Shipment>> GetShipmentListAsync(int courierId);
         bool ExistShipmentList();
         void ClearShipmentList();
+        Task SetParcelAsDelivered(int parcelId);
     }
     public class ParcelsService : IParcelsService
     {
@@ -63,6 +64,17 @@ namespace Courier.BusinessLayer
             }
 
             return true;
+        }
+
+        public async Task SetParcelAsDelivered(int parcelId)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var parcel = context.Parcels.FirstOrDefault(parcel => parcel.Id == parcelId);
+
+                parcel.ParcelStatus = ParcelStatus.Delivered;
+                await UpdateAsync(parcel);
+            }
         }
 
         public void ClearShipmentList()

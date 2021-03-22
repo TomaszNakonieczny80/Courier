@@ -24,6 +24,7 @@ namespace Courier
         private INotificationsService _notificationService;
         private int _userId;
         private bool _exit = false;
+        private double _interval;
 
         static void Main()
         {
@@ -56,7 +57,7 @@ namespace Courier
         void Run()
         {
             _parcelsService.SetRaportDate();
-            SetTimer();
+            SetTimerShipmentRaport();
             _databaseManagementService.EnsureDatabaseCreation();
           
             LoginMenu();
@@ -106,32 +107,23 @@ namespace Courier
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
         }
 
-        private void SetTimer()
+        private void SetTimerShipmentRaport()
         {
             var timeNow = _timeService.currentTime();
             var delta = _parcelsService.SetRaportDate() - timeNow;
             var deltaMilisec = delta.TotalMilliseconds;
+            _interval = deltaMilisec;
             var eightHoursMilisec = 28800000;
             var eighteenHoursMilisec = 64800000;
-            var timeMultiplier = 300;
+            var timeMultiplier = 800;
 
             Timer aTimerForRaport = new Timer();
             aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipmentRaport);
 
-            aTimerForRaport.Interval = deltaMilisec / timeMultiplier;
+            aTimerForRaport.Interval = _interval / timeMultiplier;
             aTimerForRaport.Enabled = true;
 
-            Timer aTimerForStartDelivery = new Timer();
-            aTimerForStartDelivery.Elapsed += new ElapsedEventHandler(SetStatusAsOnTheWay);
-
-            aTimerForStartDelivery.Interval = (deltaMilisec + eightHoursMilisec) / timeMultiplier;
-            aTimerForStartDelivery.Enabled = true;
-
-            Timer aTimerForStopDelivery = new Timer();
-            aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(SetStatusOnDelivered);
-
-            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / timeMultiplier;
-            aTimerForStopDelivery.Enabled = true;
+          
 
             //Timer aTimerForClearShipmentList = new Timer();
             //aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(ClearShipmentList);
@@ -144,6 +136,7 @@ namespace Courier
         private void ShipmentRaport(object source, ElapsedEventArgs e)
         {
             _parcelsService.GenerateShipmentListsAsync().Wait();
+            Console.WriteLine("\nshipment raport generated");
         }
 
         private void ShipmentRaport()

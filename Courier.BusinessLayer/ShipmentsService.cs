@@ -13,6 +13,7 @@ namespace Courier.BusinessLayer
         Task AddAsync(Shipment shipment);
         void CreateDeliverySchedule(List<Shipment> courierShipmentList);
         List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe);
+        Task<int> SetDeliveredTimeAsync(int parcelId);
         Task<int> SetPickedUpTimeAsync(int parcelId);
     }
 
@@ -101,6 +102,23 @@ namespace Courier.BusinessLayer
             }
         }
 
+        public async Task<int> SetDeliveredTimeAsync(int parcelId)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var shipment = context.Shipments.AsQueryable().FirstOrDefault(shipment => shipment.ParcelId == parcelId);
+
+                if (shipment == null)
+                {
+                    return 0;
+                }
+
+                shipment.DeliveredTime = _timeService.currentTime();
+                await UpdateAsync(shipment);
+
+                return shipment.ParcelId;
+            }
+        }
 
         public async Task UpdateAsync(Shipment shipment)
         {
