@@ -52,6 +52,10 @@ namespace Courier.WebApi.Controllers
             await _shipmentsService.SetDeliveryScoringAsync(parcelId);
         }
 
-
+        [HttpGet("shipments/{userId}")]
+        public async Task<List<Shipment>> GetAll(int userId)
+        {
+            return await _shipmentsService.GetShipmentsAsync(userId);
+        }
     }
 }

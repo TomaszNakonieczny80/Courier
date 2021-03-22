@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Channels;
 using System.Timers;
 using Courier.WebApi.Client.Model;
 using Newtonsoft.Json;
@@ -13,6 +14,7 @@ namespace Courier.WebApi.Client
     class Program
     {
         private int _userId;
+        private List<Shipment> _shipmentList;
         private List<Shipment> _shipments;
         static void Main(string[] args)
         {
@@ -49,10 +51,10 @@ namespace Courier.WebApi.Client
         {
             Console.WriteLine("\nAvailable options:");
             Console.WriteLine("\n1. Download shipment list");
-            Console.WriteLine("2. Download shimpent schedule");
+            Console.WriteLine("2. Download shipment schedule");
             Console.WriteLine("3. Set picked up time");
             Console.WriteLine("4. Set parcel as delivered");
-            Console.WriteLine("\n5. Download scoring");
+            Console.WriteLine("5. Download scoring");
             Console.WriteLine("6. Exit");
 
             while (true)
@@ -74,7 +76,7 @@ namespace Courier.WebApi.Client
                         SetParcelAsDelivered();
                         break;
                     case 5:
-                        DownloadScoring();
+                        DownloadShipmentScoring();
                         break;
                     case 6:
                         Exit();
@@ -86,9 +88,47 @@ namespace Courier.WebApi.Client
             }
         }
 
-        public void DownloadScoring()
+        public void DownloadShipmentScoring()
         {
+            if (_shipmentList == null)
+            {
+                Console.WriteLine("\nNo shipment list available to score");
+            }
+            else
+            {
+                List<int> scorings = new List<int>();
 
+                DownloadShipments();
+
+                foreach (var parcel in _shipmentList)
+                {
+                    var scoring = _shipments.FirstOrDefault(shipment => shipment.CarId == parcel.CarId).Scoring;
+                    scorings.Add(scoring);
+                }
+
+                var averageScoring = scorings.Average();
+
+                Console.WriteLine($"\nYour delivery average scoring is: {averageScoring} points");
+            }
+        }
+
+        public void DownloadShipments()
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var response = httpClient.GetAsync($"http://localhost:10500/api/shipmentlist/shipments/{_userId}").Result;
+                var responseText = response.Content.ReadAsStringAsync().Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseObject = JsonConvert.DeserializeObject<List<Shipment>>(responseText);
+                    _shipments = responseObject;
+                }
+                else
+                {
+                    Console.WriteLine($"Http query failure. Status code: {response.StatusCode}");
+                }
+            }
         }
 
         private void Exit()
@@ -126,7 +166,6 @@ namespace Courier.WebApi.Client
                     else
                     {
                         Console.WriteLine($"\nLogin successful");
-                        //_userId = int.Parse(responseText);
                         _userId = reponseObject.Id;
                         Menu();
                     }
@@ -160,7 +199,7 @@ namespace Courier.WebApi.Client
         public void SetParcelPickedUpTime()
         {
             var parcelId = GetIntFromUser("\nEnter parcel Id");
-            if (_shipments == null || _shipments.FirstOrDefault(shipment => shipment.ParcelId == parcelId) == null)
+            if (_shipmentList == null || _shipmentList.FirstOrDefault(shipment => shipment.ParcelId == parcelId) == null)
             {
                 Console.WriteLine("\nWrong Parcel number");
                 return;
@@ -193,7 +232,7 @@ namespace Courier.WebApi.Client
         public void SetParcelAsDelivered()
         {
             var parcelId = GetIntFromUser("\nEnter parcel Id");
-            if (_shipments == null || _shipments.FirstOrDefault(shipment => shipment.ParcelId == parcelId) == null)
+            if (_shipmentList == null || _shipmentList.FirstOrDefault(shipment => shipment.ParcelId == parcelId) == null)
             {
                 Console.WriteLine("\nWrong Parcel number");
                 return;
@@ -225,7 +264,7 @@ namespace Courier.WebApi.Client
 
         private void DownloadShipmentList()
         {
-            if (_shipments == null)
+            if (_shipmentList == null)
             {
                 using (var httpClient = new HttpClient())
                 {
@@ -237,7 +276,7 @@ namespace Courier.WebApi.Client
                         if (responseText == "[]")
                         {
                             Console.WriteLine("\nYou don't have any parcel attached to delivery");
-                            _shipments = null;
+                            _shipmentList = null;
                         }
                         else
                         {
@@ -248,7 +287,7 @@ namespace Courier.WebApi.Client
                                 PrintShipmentList(parcel);
                             }
 
-                            _shipments = responseObject;
+                            _shipmentList = responseObject;
                         }
                     }
                     else
@@ -262,7 +301,7 @@ namespace Courier.WebApi.Client
             else
             {
                 Console.WriteLine($"Success. Response content: ");
-                foreach (var parcel in _shipments)
+                foreach (var parcel in _shipmentList)
                 {
                     PrintShipmentList(parcel);
                 }
@@ -271,7 +310,7 @@ namespace Courier.WebApi.Client
 
         private void DownloadShimpentSchedule()
         {
-            if (_shipments == null)
+            if (_shipmentList == null)
             {
                 using (var httpClient = new HttpClient())
                 {
@@ -283,7 +322,7 @@ namespace Courier.WebApi.Client
                         if (responseText == "[]")
                         {
                             Console.WriteLine("\nYou don't have any parcel attached to delivery");
-                            _shipments = null;
+                            _shipmentList = null;
                         }
                         else
                         {
@@ -294,7 +333,7 @@ namespace Courier.WebApi.Client
                                 PrintShipmentSchedule(parcel);
                             }
 
-                            _shipments = responseObject;
+                            _shipmentList = responseObject;
                         }
                     }
                     else
@@ -307,7 +346,7 @@ namespace Courier.WebApi.Client
             else
             {
                 Console.WriteLine($"Success. Response content: ");
-                foreach (var parcel in _shipments)
+                foreach (var parcel in _shipmentList)
                 {
                     PrintShipmentSchedule(parcel);
                 }

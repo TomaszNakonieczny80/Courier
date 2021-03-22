@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Courier.DataLayer;
 using Courier.DataLayer.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Courier.BusinessLayer
 {
@@ -13,6 +14,7 @@ namespace Courier.BusinessLayer
         Task AddAsync(Shipment shipment);
         void CreateDeliverySchedule(Shipment shipment, DateTime raportDate);
         List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe);
+        Task<List<Shipment>> GetShipmentsAsync(int userId);
         Task<int> SetDeliveredTimeAsync(int parcelId);
         Task SetDeliveryScoringAsync(int parcelId);
         Task<int> SetPickedUpTimeAsync(int parcelId);
@@ -22,11 +24,13 @@ namespace Courier.BusinessLayer
     {
         private readonly Func<IParcelsDbContext> _dbContextFactoryMethod;
         private readonly ITimeService _timeService;
+        private readonly ICarsService _carsService;
         private DateTime _raportDate;
-        public ShipmentsService(Func<IParcelsDbContext> dbContextFactoryMethod, ITimeService timeService)
+        public ShipmentsService(Func<IParcelsDbContext> dbContextFactoryMethod, ITimeService timeService, ICarsService carsService)
         {
             _dbContextFactoryMethod = dbContextFactoryMethod;
             _timeService = timeService;
+            _carsService = carsService;
         }
         public DateTime SetRaportDate()
         {
@@ -64,9 +68,21 @@ namespace Courier.BusinessLayer
 
                 shipment.ScheduledPickUpTime = scheduledPickUpDate;
                 shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
+                shipment.Scoring = 0;
 
                 UpdateAsync(shipment).Wait();
            // }
+        }
+
+        public async Task<List<Shipment>> GetShipmentsAsync(int userId)
+        {
+            var carId = _carsService.GetCarId(userId);
+
+            using (var context = _dbContextFactoryMethod())
+            {
+                var shipments = await context.Shipments.AsQueryable().Where(shipment => shipment.CarId == carId).ToListAsync();
+                return shipments;
+            }
         }
 
         public Shipment GetShipment(int parcelId)
