@@ -52,7 +52,7 @@ namespace Courier.WebApi.Client
             Console.WriteLine("2. Download shimpent schedule");
             Console.WriteLine("3. Set picked up time");
             Console.WriteLine("4. Set parcel as delivered");
-         //   Console.WriteLine("\n5. Download Shipment list");
+            Console.WriteLine("\n5. Download scoring");
             Console.WriteLine("6. Exit");
 
             while (true)
@@ -73,9 +73,9 @@ namespace Courier.WebApi.Client
                     case 4:
                         SetParcelAsDelivered();
                         break;
-                    //case 1:
-                    //    DownloadShipmentList();
-                    //    break;
+                    case 5:
+                        DownloadScoring();
+                        break;
                     case 6:
                         Exit();
                         break;
@@ -86,22 +86,10 @@ namespace Courier.WebApi.Client
             }
         }
 
-        //private void SetTimer()
-        //{
-        //    var timeService = new TimeService();
-        //    var timeNow = timeService.currentTime();
-        //    var delta = timeNow.Date.AddDays(1) - timeNow;
-        //    var deltaMilisec = delta.TotalMilliseconds;
-        //    var eightHoursMilisec = 28800000;
-        //    var eighteenHoursMilisec = 64800000;
-        //    var timeMultiplier = 600;
+        public void DownloadScoring()
+        {
 
-        //    Timer aTimerForRaport = new Timer();
-        //    aTimerForRaport.Elapsed += new ElapsedEventHandler(GenerateShipmentReport);
-
-        //    aTimerForRaport.Interval = deltaMilisec / timeMultiplier;
-        //    aTimerForRaport.Enabled = true;
-        //}
+        }
 
         private void Exit()
         {

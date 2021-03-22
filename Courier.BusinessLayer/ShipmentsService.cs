@@ -14,6 +14,7 @@ namespace Courier.BusinessLayer
         void CreateDeliverySchedule(Shipment shipment, DateTime raportDate);
         List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe);
         Task<int> SetDeliveredTimeAsync(int parcelId);
+        Task SetDeliveryScoringAsync(int parcelId);
         Task<int> SetPickedUpTimeAsync(int parcelId);
     }
 
@@ -66,6 +67,62 @@ namespace Courier.BusinessLayer
 
                 UpdateAsync(shipment).Wait();
            // }
+        }
+
+        public Shipment GetShipment(int parcelId)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var shipment = context.Shipments.AsQueryable().FirstOrDefault(shipment => shipment.ParcelId == parcelId);
+                return shipment;
+            }
+        }
+        
+        public async Task SetDeliveryScoringAsync(int parcelId)
+        {
+            var scoring = CountScoring(parcelId);
+            var shipment = GetShipment(parcelId);
+            shipment.Scoring = scoring;
+
+            await UpdateAsync(shipment);
+        }
+
+        public int CountScoring(int parcelId)
+        {
+            var shipment = GetShipment(parcelId);
+
+            var scheduledDeliveryTime = shipment.ScheduledDeliveryTime;
+            var deliveredTime = shipment.DeliveredTime;
+            var delta = deliveredTime - scheduledDeliveryTime;
+            var deltaMinutes = delta.Minutes;
+            var deltaMinutesAbsoluteValue = Math.Abs(deltaMinutes);
+
+            if (deltaMinutesAbsoluteValue <= 10)
+            {
+                return 5;
+            }
+
+            if (deltaMinutesAbsoluteValue <= 20)
+            {
+                return 4;
+            }
+
+            if (deltaMinutesAbsoluteValue <= 30)
+            {
+                return 3;
+            }
+
+            if (deltaMinutesAbsoluteValue <= 40)
+            {
+                return 2;
+            }
+
+            if (deltaMinutesAbsoluteValue <= 50)
+            {
+                return 1;
+            }
+
+            return 0;
         }
 
         public List<Shipment> GetShipmentList(List<Parcel> parcelsNotServe)

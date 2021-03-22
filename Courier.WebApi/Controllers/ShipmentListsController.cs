@@ -45,8 +45,11 @@ namespace Courier.WebApi.Controllers
         [HttpPost("delivered/{parcelId}")]
         public async Task PostParcelDelivered(int parcelId)
         {
-            _shipmentsService.SetDeliveredTimeAsync(parcelId);
-            await _parcelsService.SetParcelAsDelivered(parcelId);
+            _shipmentsService.SetDeliveredTimeAsync(parcelId).Wait();
+            
+            _parcelsService.SetParcelAsDeliveredAsync(parcelId).Wait();
+
+            await _shipmentsService.SetDeliveryScoringAsync(parcelId);
         }
 
 
