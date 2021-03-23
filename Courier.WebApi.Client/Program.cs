@@ -106,7 +106,7 @@ namespace Courier.WebApi.Client
 
                 var averageScoring = scorings.Average();
 
-                Console.WriteLine($"\nYour delivery average scoring is: {averageScoring} points");
+                Console.WriteLine($"\nCurrent shipment list scoring: {averageScoring} points");
             }
         }
 
