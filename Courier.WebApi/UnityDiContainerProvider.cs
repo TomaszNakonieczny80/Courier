@@ -12,9 +12,6 @@ namespace Courier.WebApi
         {
             var container = new UnityContainer();
 
-            //container.RegisterType<IMenu, Menu>();
-            //container.RegisterType<IMenuItem, MenuItem>();
-            //container.RegisterType<IIoHelper, IoHelper>();
             container.RegisterType<IDatabaseManagementService, DatabaseManagementService>();
             container.RegisterType<IUsersService, UsersService>();
             container.RegisterType<IParcelsService, ParcelsService>();
@@ -22,6 +19,8 @@ namespace Courier.WebApi
             container.RegisterType<ICoordinatesService, CoordinatesService>();
             container.RegisterType<ITimeService, TimeService>();
             container.RegisterType<INotificationsService, NotificationsService>();
+            container.RegisterType<IShipmentsService, ShipmentsService>();
+            container.RegisterType<IDistanceCalculator, DistanceCalculator>();
             container.RegisterType<Func<IParcelsDbContext>>(
                 new InjectionFactory(ctx => new Func<IParcelsDbContext>(() => new ParcelsDbContext())));
 

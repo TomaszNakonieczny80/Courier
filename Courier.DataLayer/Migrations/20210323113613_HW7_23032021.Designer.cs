@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Courier.DataLayer.Migrations
 {
     [DbContext(typeof(ParcelsDbContext))]
-    [Migration("20210301142942_courier_01032021")]
-    partial class courier_01032021
+    [Migration("20210323113613_HW7_23032021")]
+    partial class HW7_23032021
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -19,7 +19,7 @@ namespace Courier.DataLayer.Migrations
             modelBuilder
                 .UseIdentityColumns()
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("ProductVersion", "5.0.2");
+                .HasAnnotation("ProductVersion", "5.0.3");
 
             modelBuilder.Entity("Courier.DataLayer.Models.Address", b =>
                 {
@@ -148,6 +148,12 @@ namespace Courier.DataLayer.Migrations
                         .HasColumnType("int")
                         .UseIdentityColumn();
 
+                    b.Property<int>("CarId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("DeliveredAutomatically")
+                        .HasColumnType("bit");
+
                     b.Property<double>("ParcelLatitude")
                         .HasColumnType("float");
 
@@ -185,6 +191,57 @@ namespace Courier.DataLayer.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Parcels");
+                });
+
+            modelBuilder.Entity("Courier.DataLayer.Models.Shipment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
+
+                    b.Property<int?>("CarId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DeliveredTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("DistanceToParcel")
+                        .HasColumnType("float");
+
+                    b.Property<double>("DistanceToRecipient")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ParcelId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ParcelNumber")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PickedUpTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RegisterDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ScheduledDeliveryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ScheduledPickUpTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Scoring")
+                        .HasColumnType("int");
+
+                    b.Property<double>("TravelTimeToParcel")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TravelTimeToRecipient")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Shipments");
                 });
 
             modelBuilder.Entity("Courier.DataLayer.Models.User", b =>

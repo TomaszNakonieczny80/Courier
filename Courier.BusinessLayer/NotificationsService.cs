@@ -1,10 +1,7 @@
 ﻿
 using System.Collections.Generic;
 using EventStore.Client;
-using System.Text.Json;
 using Courier.DataLayer.Models;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Newtonsoft.Json;
 using EventData = EventStore.Client.EventData;
 
 namespace Courier.BusinessLayer

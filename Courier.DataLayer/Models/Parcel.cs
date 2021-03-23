@@ -23,6 +23,7 @@ namespace Courier.DataLayer.Models
     public class Parcel
     {
         public int Id { get; set; }
+        public int CarId { get; set; }
         public Guid ParcelNumber { get; set; }
         public User Recipient { get; set; }
         public int SenderId { get; set; }
@@ -34,6 +35,6 @@ namespace Courier.DataLayer.Models
         public double ParcelLongitude { get; set; }
         public double RecipientLatitude { get; set; }
         public double RecipientLongitude { get; set; }
-
+        public bool DeliveredAutomatically { get; set; }
     }
 }

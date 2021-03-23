@@ -23,6 +23,9 @@ namespace Courier
             container.RegisterType<ICoordinatesService, CoordinatesService>();
             container.RegisterType<ITimeService, TimeService>();
             container.RegisterType<INotificationsService, NotificationsService>();
+            container.RegisterType<IShipmentsService, ShipmentsService>();
+            container.RegisterType<IDistanceCalculator, DistanceCalculator>();
+
             container.RegisterType<Func<IParcelsDbContext>>(
                 new InjectionFactory(ctx => new Func<IParcelsDbContext>(() => new ParcelsDbContext())));
 

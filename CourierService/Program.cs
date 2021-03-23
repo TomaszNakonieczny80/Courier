@@ -5,7 +5,6 @@ using System.Linq;
 using System.Timers;
 using Unity;
 using Courier.BusinessLayer;
-using Courier.BusinessLayer.Models;
 using Courier.BusinessLayer.Serializers;
 using Courier.DataLayer.Models;
 using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
@@ -24,10 +23,8 @@ namespace Courier
         private ITimeService _timeService;
         private INotificationsService _notificationService;
         private int _userId;
-
-
-
         private bool _exit = false;
+        private double _timeMultiplier = 60;
 
         static void Main()
         {
@@ -59,7 +56,9 @@ namespace Courier
 
         void Run()
         {
-            SetTimer();
+            _parcelsService.SetRaportDate();
+            SetTimerFirstShipmentRaport();
+
             _databaseManagementService.EnsureDatabaseCreation();
           
             LoginMenu();
@@ -74,6 +73,7 @@ namespace Courier
             }
             while (!_exit);
         }
+
         void OpenMainMenu()
         {
             Menu();
@@ -106,43 +106,68 @@ namespace Courier
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
         }
 
-        private void SetTimer()
+        private void SetTimerFirstShipmentRaport()
         {
             var timeNow = _timeService.currentTime();
-            var delta = timeNow.Date.AddDays(1) - timeNow;
+            var delta = _parcelsService.SetRaportDate() - timeNow;
             var deltaMilisec = delta.TotalMilliseconds;
             var eightHoursMilisec = 28800000;
             var eighteenHoursMilisec = 64800000;
+            
+            Timer aTimerForRaport = new Timer();
+            aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipmentRaport);
+
+            aTimerForRaport.Interval = deltaMilisec / _timeMultiplier;
+            aTimerForRaport.AutoReset = false;
+            aTimerForRaport.Enabled = true;
+        }
+
+        private void SetTimerNext24HoursShipmentRaport()
+        {
+            double milisec24Hours = 86400000;
 
             Timer aTimerForRaport = new Timer();
-            aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipementRaport);
+            aTimerForRaport.Elapsed += new ElapsedEventHandler(ShipmentRaport);
 
-            aTimerForRaport.Interval = deltaMilisec / 60;
+            aTimerForRaport.Interval = milisec24Hours / _timeMultiplier;
+            aTimerForRaport.AutoReset = false;
             aTimerForRaport.Enabled = true;
+        }
+
+        private void SetTimerShipmentAutomatDelivery()
+        {
+            var eightHoursMilisec = 28800000;
+            var eighteenHoursMilisec = 64800000;
 
             Timer aTimerForStartDelivery = new Timer();
             aTimerForStartDelivery.Elapsed += new ElapsedEventHandler(SetStatusAsOnTheWay);
 
-            aTimerForStartDelivery.Interval = (deltaMilisec + eightHoursMilisec) / 60;
+            aTimerForStartDelivery.Interval = (eightHoursMilisec) / _timeMultiplier;
+            aTimerForStartDelivery.AutoReset = false;
             aTimerForStartDelivery.Enabled = true;
 
             Timer aTimerForStopDelivery = new Timer();
             aTimerForStopDelivery.Elapsed += new ElapsedEventHandler(SetStatusOnDelivered);
 
-            aTimerForStopDelivery.Interval = (deltaMilisec + eighteenHoursMilisec) / 60;
+            aTimerForStopDelivery.Interval = (eighteenHoursMilisec) / _timeMultiplier;
+            aTimerForStopDelivery.AutoReset = false;
             aTimerForStopDelivery.Enabled = true;
-
-
         }
 
-        private void ShipementRaport(object source, ElapsedEventArgs e)
+        private void ShipmentRaport(object source, ElapsedEventArgs e)
         {
-            GenerateShipmentList();
+            _parcelsService.GenerateShipmentListsAsync().Wait();
+            
+            Console.WriteLine("\nNew shipment raport was generated");
+            
+            SetTimerNext24HoursShipmentRaport();
+            SetTimerShipmentAutomatDelivery();
         }
 
         private void SetStatusAsOnTheWay(object source, ElapsedEventArgs e)
         {
             _parcelsService.SetParcelsAsOnTheWay();
+            Console.WriteLine("\nParcels are on the way (applies to automatically handled)");
         }
 
         private void SetStatusOnDelivered(object source, ElapsedEventArgs e)
@@ -153,11 +178,7 @@ namespace Courier
                 _notificationService.NotifyParcelsDelivered(parcelsOnTheWay);
             }
             _parcelsService.SetParcelsAsDelivered(parcelsOnTheWay);
-        }
-     
-        void GenerateShipmentList()
-        {
-          _parcelsService.GenerateShipmentList();
+            Console.WriteLine("\nParcels are delivered (applies to automatically handled");
         }
 
         void AddParcel()

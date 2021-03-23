@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
-
-namespace Courier.WebApi.Client.Model
+namespace Courier.DataLayer.Models
 {
     public class Shipment
     {
@@ -17,7 +18,7 @@ namespace Courier.WebApi.Client.Model
         public double DistanceToRecipient { get; set; }
         public double TravelTimeToRecipient { get; set; }
         public DateTime ScheduledDeliveryTime { get; set; }
-        public int Scoring { get; set; }
         public DateTime DeliveredTime { get; set; }
+        public int Scoring { get; set; }
     }
 }

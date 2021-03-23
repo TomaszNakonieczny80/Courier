@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Courier.DataLayer.Migrations
 {
-    public partial class courier_01032021 : Migration
+    public partial class HW7_23032021 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -72,6 +72,31 @@ namespace Courier.DataLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Shipments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ParcelId = table.Column<int>(type: "int", nullable: false),
+                    ParcelNumber = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CarId = table.Column<int>(type: "int", nullable: true),
+                    RegisterDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DistanceToParcel = table.Column<double>(type: "float", nullable: false),
+                    TravelTimeToParcel = table.Column<double>(type: "float", nullable: false),
+                    ScheduledPickUpTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PickedUpTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DistanceToRecipient = table.Column<double>(type: "float", nullable: false),
+                    TravelTimeToRecipient = table.Column<double>(type: "float", nullable: false),
+                    ScheduledDeliveryTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DeliveredTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Scoring = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Shipments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -101,6 +126,7 @@ namespace Courier.DataLayer.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    CarId = table.Column<int>(type: "int", nullable: false),
                     ParcelNumber = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RecipientId = table.Column<int>(type: "int", nullable: true),
                     SenderId = table.Column<int>(type: "int", nullable: false),
@@ -110,7 +136,8 @@ namespace Courier.DataLayer.Migrations
                     ParcelLatitude = table.Column<double>(type: "float", nullable: false),
                     ParcelLongitude = table.Column<double>(type: "float", nullable: false),
                     RecipientLatitude = table.Column<double>(type: "float", nullable: false),
-                    RecipientLongitude = table.Column<double>(type: "float", nullable: false)
+                    RecipientLongitude = table.Column<double>(type: "float", nullable: false),
+                    DeliveredAutomatically = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -155,6 +182,9 @@ namespace Courier.DataLayer.Migrations
 
             migrationBuilder.DropTable(
                 name: "Parcels");
+
+            migrationBuilder.DropTable(
+                name: "Shipments");
 
             migrationBuilder.DropTable(
                 name: "Users");

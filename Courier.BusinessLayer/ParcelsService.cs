@@ -2,52 +2,73 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Courier.BusinessLayer.Models;
 using Courier.DataLayer;
-using Courier.DataLayer.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Courier.BusinessLayer.Serializers;
+using Courier.DataLayer.Models;
+using EventStore.Client;
+
 
 namespace Courier.BusinessLayer
 {
     public interface IParcelsService
     {
         Task AddAsync(Parcel parcel);
-        Task AddAsync(CarParcel carParcel);
-        List<CarParcel> GetAllCarParcel();
-        CarParcel GetCarParcel(int? parcelId);
-        CarParcel GetCarParcelId(int carParcelId);
-        CarParcel GetParcelId(int parcelId);
-        List<Parcel> GetParcelsWaitingToBePosted();
-        List<Parcel> GetPostedParcels();
-        Task RemoveAsync(CarParcel carParcel);
         List<Parcel> GetParcelsOnTheWay();
         void SetParcelsAsOnTheWay();
         void SetParcelsAsDelivered(List<Parcel> parcelsOnTheWay);
-        List<Car> GetAvailableCars();
-        Task CreateCarParcelsBaseAsync();
-        List<Shipment> AttachDriverToParcel();
-        List<int> GetListCarParcelId(int? carId);
-        uint GetAvailableCapcity(int? carId);
-        void Update(CarParcel carParcel);
-        void Update(Parcel parcel);
-        bool AvailableCars();
-        void GenerateShipmentList();
-        Task <List<Shipment>> GenerateShipmentListAsync(int courierId);
-        Task ClearCarParcelBaseAsync();
+        Task GenerateShipmentListsAsync();
+        DateTime SetRaportDate();
+        Task <List<Shipment>> GetShipmentListAsync(int courierId);
+        void ClearShipmentList();
+        Task SetParcelAsDeliveredAsync(int parcelId);
     }
     public class ParcelsService : IParcelsService
     {
         private readonly Func<IParcelsDbContext> _dbContextFactoryMethod;
         private ITimeService _timeService;
         private ICarsService _carsService;
+        private IShipmentsService _shipmentsService;
+        private IDistanceCalculator _distanceCalculator;
+        private DateTime _raportDate;
+        private List<Shipment> _shipmentList;
 
-        public ParcelsService(Func<IParcelsDbContext> dbContextFactoryMethod, ITimeService timeService, ICarsService carsService)
+        public ParcelsService(Func<IParcelsDbContext> dbContextFactoryMethod, 
+            ITimeService timeService, 
+            ICarsService carsService, 
+            IShipmentsService shipmentsService,
+            IDistanceCalculator distanceCalculator)
         {
             _dbContextFactoryMethod = dbContextFactoryMethod;
             _timeService = timeService;
             _carsService = carsService;
+            _shipmentsService = shipmentsService;
+            _distanceCalculator = distanceCalculator;
+        }
+
+        public DateTime SetRaportDate()
+        {
+            var raportDate = _timeService.currentTime().Date.AddDays(1);
+            _raportDate = raportDate;
+            
+            return raportDate;
+        }
+
+        public async Task SetParcelAsDeliveredAsync(int parcelId)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var parcel = context.Parcels.FirstOrDefault(parcel => parcel.Id == parcelId);
+
+                parcel.ParcelStatus = ParcelStatus.Delivered;
+                await UpdateAsync(parcel);
+            }
+        }
+
+        public void ClearShipmentList()
+        {
+            _shipmentList.Clear();
         }
 
         public async Task AddAsync(Parcel parcel)
@@ -126,7 +147,7 @@ namespace Courier.BusinessLayer
         {
             using (var context = _dbContextFactoryMethod())
             {
-                var parcels = context.Parcels.AsQueryable().Where(parcel => parcel.ParcelStatus == ParcelStatus.Posted).ToList();
+                var parcels = context.Parcels.AsQueryable().Where(parcel => parcel.ParcelStatus == ParcelStatus.Posted && parcel.DeliveredAutomatically == true).ToList();
                 return parcels;
             }
         }
@@ -141,7 +162,7 @@ namespace Courier.BusinessLayer
                     .ThenInclude(address => address.Address)
                     .Include(user => user.Recipient)
                     .ThenInclude(address => address.Address)
-                    .Where(parcel => parcel.ParcelStatus == ParcelStatus.OnTheWay).ToList();
+                    .Where(parcel => parcel.ParcelStatus == ParcelStatus.OnTheWay && parcel.DeliveredAutomatically == true).ToList();
                 return parcels;
             }
         }
@@ -151,7 +172,7 @@ namespace Courier.BusinessLayer
             foreach (var parcel in GetPostedParcels())
             {
                 parcel.ParcelStatus = ParcelStatus.OnTheWay;
-                Update(parcel);
+                UpdateAsync(parcel).Wait();
             }
         }
 
@@ -160,7 +181,7 @@ namespace Courier.BusinessLayer
             foreach (var parcel in parcelsOnTheWay)
             {
                 parcel.ParcelStatus = ParcelStatus.Delivered;
-                Update(parcel);
+                UpdateAsync(parcel).Wait();
             }
         }
         
@@ -179,15 +200,23 @@ namespace Courier.BusinessLayer
             {
                 using (var context = _dbContextFactoryMethod())
                 {
+
                     foreach (var carsAvailable in GetAvailableCars())
                     {
-                        var carAvailable = context.Cars.AsQueryable().Where(car => car.Id == carsAvailable.Id).FirstOrDefault();
-                        var distanceToParcel = Math.Round((Math.Sqrt((Math.Pow((parcel.ParcelLatitude - carAvailable.Latitude), 2)) + ((Math.Pow((parcel.ParcelLongitude - carAvailable.Longitude), 2)))) * 73));
-                        var distanceToRecipient = Math.Round((Math.Sqrt((Math.Pow((parcel.RecipientLatitude - carAvailable.Latitude), 2)) + ((Math.Pow((parcel.RecipientLongitude - carAvailable.Longitude), 2)))) * 73));
+                        
+                        var carAvailable = context.Cars.AsQueryable().Where(car => car.Id == carsAvailable.Id)
+                            .FirstOrDefault();
+
+                        var distanceToParcel = _distanceCalculator.GetDistanceToParcel(parcel, carAvailable);
+
+                        var distanceToRecipient = _distanceCalculator.GetDistanceToRecipient(parcel, carAvailable);
+                        
                         var averageSpeed = carAvailable.AverageSpeed;
                         var travelTimeToParcel = distanceToParcel / averageSpeed;
                         var travelTimeToRecipient = distanceToRecipient / averageSpeed;
-                        var totalTravelTime = ((distanceToParcel / averageSpeed) + (distanceToRecipient / averageSpeed))*2;
+                        var totalTravelTime =
+                            ((distanceToParcel / averageSpeed) + (distanceToRecipient / averageSpeed)) * 2;
+
                         double workingHours = 10;
                         
                         CarParcel carParcel = new CarParcel
@@ -201,32 +230,35 @@ namespace Courier.BusinessLayer
                             TravelTimeToParcel = travelTimeToParcel,
                             TravelTimeToRecipient = travelTimeToRecipient,
                             TotalTravelTime = totalTravelTime,
-                       
                             AvailableTime = workingHours,
                             Full = false,
                             Posted = false
                         };
+
                         await AddAsync(carParcel);
                     }
                 }
             }
         }
 
-        public List<Shipment> AttachDriverToParcel()
+        public List<Shipment> AttachDriverToParcels()
         {
             List<Shipment> shipementList = new List<Shipment>();
-            
-            //int? carId;
+
+           // DateTime startDate = _raportDate.AddHours(8);
             foreach (var selectedParcel in GetParcelsWaitingToBePosted())
             {
                 //Sprawdzam czy sa samochody z wolną przestrzenia ładunkowa, jezeli wszystkie sa juz załadowane na full zamykam liste przewozowa,
                 //paczki bez przypisanego kuriera beda mogły by obsłuzone kolejnego dnia
+
+                
                 if (AvailableCars())
                 {
                     //dla kazdej paczki oczekujacej na wysłanie dobieram najblizszego kuriera do nadawcy
                     //jezeli kurier jest juz zapakowany na full lub total czas odbioru i przesyłki przekaracza godziny pracy kuriera biore nastepnego najblizszego kuriera
 
                     int? carId;
+                    
 
                     using (var context = _dbContextFactoryMethod())
                     {
@@ -237,6 +269,7 @@ namespace Courier.BusinessLayer
                             .FirstOrDefault(parcel => parcel.ParcelId == selectedParcel.Id)
                             ?.CarId;
                     }
+                    
 
                     if (carId == null)
                     {
@@ -245,8 +278,9 @@ namespace Courier.BusinessLayer
 
                     int parcelWeight = (int) selectedParcel.ParcelSize;
                     //licze ile czasu dostepnego zostanie kurierowi po przypisaniu paczki
-                    double deltaTime = GetCarParcel(selectedParcel.Id).AvailableTime -
-                                       GetCarParcel(selectedParcel.Id).TotalTravelTime;
+                    var selectedCarParcel = GetCarParcel(selectedParcel.Id);
+                    double deltaTime = selectedCarParcel.AvailableTime -
+                                       selectedCarParcel.TotalTravelTime;
 
                     //aktualizuje dostepna ładownosc samochodu i dostepny czas po przypisaniu paczki, 
                     foreach (var carParcelId in GetListCarParcelId(carId))
@@ -263,16 +297,17 @@ namespace Courier.BusinessLayer
 
                     var parcel = GetParcelId(selectedParcel.Id);
                     parcel.Posted = true;
-
+                    
                     Update(parcel);
 
                     selectedParcel.ParcelStatus = ParcelStatus.Posted;
-                    Update(selectedParcel);
+                    UpdateAsync(selectedParcel).Wait();
 
                     var minAvailableCapacity = 150;
                     //jezeli w aucie pozostało mniej miejsca niz na 1 duza poczke 150 kg to oznaczam go jako zapełniony na maksa
                     if (GetAvailableCapcity(carId) < minAvailableCapacity)
                     {
+                       
                         foreach (var carParcelId in GetListCarParcelId(carId))
                         {
                             var carParcel = GetCarParcelId(carParcelId);
@@ -282,12 +317,27 @@ namespace Courier.BusinessLayer
                         }
                     }
 
-                    shipementList.Add(new Shipment()
+                    Shipment shipment = new Shipment()
                     {
                         ParcelNumber = selectedParcel.ParcelNumber,
+                        ParcelId = selectedParcel.Id,
                         CarId = carId,
                         RegisterDate = selectedParcel.RegisterDate,
-                    });
+                        DistanceToParcel = selectedCarParcel.DistanceToParcel,
+                        TravelTimeToParcel = selectedCarParcel.TravelTimeToParcel,
+                        DistanceToRecipient = selectedCarParcel.TravelTimeToRecipient,
+                        TravelTimeToRecipient = selectedCarParcel.TravelTimeToRecipient,
+                    };
+
+                    shipementList.Add(shipment);
+                   
+                    _shipmentsService.AddAsync(shipment).Wait();
+
+                    selectedParcel.CarId = (int) carId;
+                    selectedParcel.DeliveredAutomatically = true;
+                    UpdateAsync(selectedParcel).Wait();
+
+                    _shipmentsService.CreateDeliverySchedule(shipment, _raportDate);
                 }
             }
 
@@ -301,13 +351,23 @@ namespace Courier.BusinessLayer
                 await RemoveAsync(carParcel);
             }
         }
-        public void GenerateShipmentList()
+        public async Task GenerateShipmentListsAsync()
         {
             CreateCarParcelsBaseAsync().Wait();
-            var shipmentList = AttachDriverToParcel();
+            var shipmentList = AttachDriverToParcels();
+            _shipmentList = shipmentList;
+
+            SerializeShipementList(shipmentList);
+           
+            await ClearCarParcelBaseAsync();
+        }
+
+        public void SerializeShipementList(List<Shipment> shipmentList)
+        {
             foreach (var courier in shipmentList)
             {
                 List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.CarId == courier.CarId).ToList();
+
 
                 string systemDrivePath = Path.GetPathRoot(Environment.SystemDirectory);
                 string targetPath = $"{systemDrivePath}Shiping_list";
@@ -317,30 +377,49 @@ namespace Courier.BusinessLayer
 
                 string fileName = $"DriverId{courier.CarId}_{date}.json";
                 string filePath = Path.Combine(targetPath, fileName);
-                //  var filePath = $@"C:\GitRepository\Courier\Courier\Shipment_List/DriverId{courier.DriverId}_{date}.json";
 
                 var jsonDataSerializer = new JsonDataSerializer();
                 jsonDataSerializer.Serialize(courierShipmentList, filePath);
             }
-
-            //po wygenerowaniu raportu czyszcze tablice carParcel,
-            //paczki nie przypisane beda uwzgleniane w kolejnym raporcie na pierwszym m-cu
-            ClearCarParcelBaseAsync().Wait();
         }
 
-        public async Task<List<Shipment>> GenerateShipmentListAsync(int courierId)
+        public async Task<List<Shipment>> GetShipmentListAsync(int courierId)
         {
-            await CreateCarParcelsBaseAsync();
-
-            var shipmentList = AttachDriverToParcel();
             var carId = _carsService.GetCarId(courierId);
+           
+            List<Shipment> courierShipmentList = new List<Shipment>();
             
-            List<Shipment> courierShipmentList = shipmentList.Where(shipment => shipment.CarId == carId).ToList();
+            var parcelsNotServed = GetCourierParcelsNotServed(carId);
+            
+            if (parcelsNotServed.Count != 0)
+            {
 
-            await ClearCarParcelBaseAsync();
+                courierShipmentList = _shipmentsService.GetShipmentList(parcelsNotServed);
+
+             //   _shipmentsService.CreateDeliverySchedule(courierShipmentList);
+
+                foreach (var parcel in parcelsNotServed)
+                {
+                    parcel.DeliveredAutomatically = false;
+                    parcel.ParcelStatus = ParcelStatus.OnTheWay;
+                    await UpdateAsync(parcel);
+                }
+
+                return courierShipmentList;
+            }
+
             return courierShipmentList;
         }
 
+        public List<Parcel> GetCourierParcelsNotServed(int carId)
+        {
+            using (var context = _dbContextFactoryMethod())
+            {
+                var parcels = context.Parcels.AsQueryable().Where(parcel => parcel.CarId == carId && parcel.ParcelStatus == ParcelStatus.Posted && parcel.DeliveredAutomatically == true).ToList();
+                return parcels;
+            }
+        }
+         
         public List<int> GetListCarParcelId(int? carId)
         {
             using (var context = _dbContextFactoryMethod())
@@ -368,12 +447,12 @@ namespace Courier.BusinessLayer
             }
         }
 
-        public void Update(Parcel parcel)
+        public async Task UpdateAsync(Parcel parcel)
         {
             using (var context = _dbContextFactoryMethod())
             {
                 context.Parcels.Update(parcel);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
