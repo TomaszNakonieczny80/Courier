@@ -73,6 +73,7 @@ namespace Courier
             }
             while (!_exit);
         }
+
         void OpenMainMenu()
         {
             Menu();
