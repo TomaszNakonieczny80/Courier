@@ -19,7 +19,5 @@ namespace Courier.WebApi.Client.Model
         public DateTime ScheduledDeliveryTime { get; set; }
         public int Scoring { get; set; }
         public DateTime DeliveredTime { get; set; }
-        public bool New { get; set; }
-        public bool CurrentShipment { get; set; }
     }
 }

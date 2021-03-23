@@ -327,8 +327,6 @@ namespace Courier.BusinessLayer
                         TravelTimeToParcel = selectedCarParcel.TravelTimeToParcel,
                         DistanceToRecipient = selectedCarParcel.TravelTimeToRecipient,
                         TravelTimeToRecipient = selectedCarParcel.TravelTimeToRecipient,
-                        New = true,
-                        CurrentShipment = true,
                     };
 
                     shipementList.Add(shipment);

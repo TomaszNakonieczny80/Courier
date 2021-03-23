@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Threading.Channels;
-using System.Timers;
 using Courier.WebApi.Client.Model;
 using Newtonsoft.Json;
 
@@ -202,7 +200,6 @@ namespace Courier.WebApi.Client
                     {
                         Console.WriteLine("\nPicked up time was set.");
                     }
-                    
                 }
                 else
                 {
@@ -282,7 +279,7 @@ namespace Courier.WebApi.Client
 
             else
             {
-                Console.WriteLine($"Success. Response content: ");
+                Console.WriteLine($"\nSuccess. Response content: ");
                 foreach (var parcel in _shipmentList)
                 {
                     PrintShipmentList(parcel);
@@ -327,7 +324,7 @@ namespace Courier.WebApi.Client
 
             else
             {
-                Console.WriteLine($"Success. Response content: ");
+                Console.WriteLine($"\nSuccess. Response content: ");
                 foreach (var parcel in _shipmentList)
                 {
                     PrintShipmentSchedule(parcel);
@@ -337,12 +334,12 @@ namespace Courier.WebApi.Client
 
         private void PrintShipmentList(Shipment shipment)
         {
-            Console.WriteLine($"CarId: {shipment.CarId}, ParcelId: {shipment.ParcelId}, ParcelNumber: {shipment.ParcelNumber}, RegisterDate: {shipment.RegisterDate}");
+            Console.WriteLine($"Parcel Id: {shipment.ParcelId}, Parcel number: {shipment.ParcelNumber}, Register date: {shipment.RegisterDate}");
         }
 
         private void PrintShipmentSchedule(Shipment shipment)
         {
-            Console.WriteLine($"ParcelId: {shipment.ParcelId}, DistanceToParcel: {shipment.DistanceToParcel}km, TravelTimeToParcel: {shipment.TravelTimeToParcel}hours, DistanceToRecipient: {shipment.DistanceToRecipient}km, TravelTimeToRecipient: {shipment.TravelTimeToRecipient}hours");
+            Console.WriteLine($"Parcel Id: {shipment.ParcelId}, Distance to parcel: {shipment.DistanceToParcel} km, Travel time to parcel: {shipment.TravelTimeToParcel} hours, Distance to recipient: {shipment.DistanceToRecipient} km, Travel time to recipient: {shipment.TravelTimeToRecipient} hours");
         }
 
         private string GetTextFromUser(string message)

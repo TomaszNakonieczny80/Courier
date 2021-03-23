@@ -30,12 +30,23 @@ namespace Courier.WebApi.Controllers
             return await _parcelsService.GetShipmentListAsync(userId);
         }
 
+        /// <summary>
+        /// Endpoint allowing to set parcel picked up time
+        /// </summary>
+        /// <param name="parcelId"></param>
+        
         [HttpPost("pickedup/{parcelId}")]
         public async Task PostParcelPicedUp(int parcelId)
         {
             await _shipmentsService.SetPickedUpTimeAsync(parcelId);
         }
 
+
+        /// <summary>
+        /// Endpoint allowing to set parcel as delivered
+        /// </summary>
+        /// <param name="parcelId"></param>
+        
         [HttpPost("delivered/{parcelId}")]
         public async Task PostParcelDelivered(int parcelId)
         {
@@ -45,6 +56,12 @@ namespace Courier.WebApi.Controllers
 
             await _shipmentsService.SetDeliveryScoringAsync(parcelId);
         }
+
+        /// <summary>
+        /// Endpoint allowing to download shipments
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>List of shipments for user</returns>
 
         [HttpGet("shipments/{userId}")]
         public async Task<List<Shipment>> GetAll(int userId)

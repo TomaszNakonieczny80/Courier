@@ -24,7 +24,7 @@ namespace Courier
         private INotificationsService _notificationService;
         private int _userId;
         private bool _exit = false;
-        private double _timeMultiplier = 1060;
+        private double _timeMultiplier = 1600;
 
         static void Main()
         {
