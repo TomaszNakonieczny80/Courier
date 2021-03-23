@@ -25,21 +25,14 @@ namespace Courier.BusinessLayer
         private readonly Func<IParcelsDbContext> _dbContextFactoryMethod;
         private readonly ITimeService _timeService;
         private readonly ICarsService _carsService;
-        private DateTime _raportDate;
+        
         public ShipmentsService(Func<IParcelsDbContext> dbContextFactoryMethod, ITimeService timeService, ICarsService carsService)
         {
             _dbContextFactoryMethod = dbContextFactoryMethod;
             _timeService = timeService;
             _carsService = carsService;
         }
-        public DateTime SetRaportDate()
-        {
-            var raportDate = _timeService.currentTime().Date.AddDays(1);
-            _raportDate = raportDate;
-
-            return raportDate;
-        }
-
+       
         public async Task AddAsync(Shipment shipment)
         {
             using (var context = _dbContextFactoryMethod())
@@ -51,27 +44,24 @@ namespace Courier.BusinessLayer
 
         public void CreateDeliverySchedule(Shipment shipment, DateTime raportDate)
         {
-            //DateTime startDate = SetRaportDate().AddHours(8);
             DateTime startDate = raportDate.AddHours(8);
             
-            //foreach (var shipment in courierShipmentList)
-            //{
-                double travelTimeToParcelMinutes = shipment.TravelTimeToParcel * 60;
-                double travelTimeToRecipienMinutes = shipment.TravelTimeToRecipient * 60;
+            double travelTimeToParcelMinutes = shipment.TravelTimeToParcel * 60;
+            double travelTimeToRecipienMinutes = shipment.TravelTimeToRecipient * 60;
 
-                var scheduledPickUpDate = startDate.AddMinutes(travelTimeToParcelMinutes);
-                var backToBaseWithParcelDate = startDate.AddMinutes(travelTimeToParcelMinutes * 2);
-                var scheduledDeliveryDate = backToBaseWithParcelDate.AddMinutes(travelTimeToRecipienMinutes);
-                var backToBaseFromRecipientDate = backToBaseWithParcelDate.AddMinutes(travelTimeToParcelMinutes * 2);
-                
-                startDate = backToBaseFromRecipientDate;
+            var scheduledPickUpDate = startDate.AddMinutes(travelTimeToParcelMinutes);
+            var backToBaseWithParcelDate = startDate.AddMinutes(travelTimeToParcelMinutes * 2);
+            var scheduledDeliveryDate = backToBaseWithParcelDate.AddMinutes(travelTimeToRecipienMinutes);
+            var backToBaseFromRecipientDate = backToBaseWithParcelDate.AddMinutes(travelTimeToParcelMinutes * 2);
+            
+            startDate = backToBaseFromRecipientDate;
 
-                shipment.ScheduledPickUpTime = scheduledPickUpDate;
-                shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
-                shipment.Scoring = 0;
+            shipment.ScheduledPickUpTime = scheduledPickUpDate;
+            shipment.ScheduledDeliveryTime = scheduledDeliveryDate;
+            shipment.Scoring = 0;
 
-                UpdateAsync(shipment).Wait();
-           // }
+            UpdateAsync(shipment).Wait();
+           
         }
 
         public async Task<List<Shipment>> GetShipmentsAsync(int userId)
@@ -110,7 +100,7 @@ namespace Courier.BusinessLayer
             var scheduledDeliveryTime = shipment.ScheduledDeliveryTime;
             var deliveredTime = shipment.DeliveredTime;
             var delta = deliveredTime - scheduledDeliveryTime;
-            var deltaMinutes = delta.Minutes;
+            var deltaMinutes = delta.TotalMinutes;
             var deltaMinutesAbsoluteValue = Math.Abs(deltaMinutes);
 
             if (deltaMinutesAbsoluteValue <= 10)

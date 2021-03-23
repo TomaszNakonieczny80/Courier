@@ -178,24 +178,6 @@ namespace Courier.WebApi.Client
             }
         }
 
-        //public void GenerateShipmentReport(object source, ElapsedEventArgs e)
-        //{
-        //    using (var httpClient = new HttpClient())
-        //    {
-        //        var response = httpClient.PostAsync($"http://localhost:10500/api/shipmentlist", null).Result;
-        //        var responseText = response.Content.ReadAsStringAsync().Result;
-
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            Console.WriteLine("\nNew shipment report was created.");
-        //        }
-        //        else
-        //        {
-        //            Console.WriteLine($"Http query failure. Status code: {response.StatusCode}");
-        //        }
-        //    }
-        //}
-
         public void SetParcelPickedUpTime()
         {
             var parcelId = GetIntFromUser("\nEnter parcel Id");

@@ -30,12 +30,6 @@ namespace Courier.WebApi.Controllers
             return await _parcelsService.GetShipmentListAsync(userId);
         }
 
-        //[HttpPost]
-        //public async Task PostGenerateShipmentLists()
-        //{
-        //    await _parcelsService.GenerateShipmentListsAsync();
-        //}
-
         [HttpPost("pickedup/{parcelId}")]
         public async Task PostParcelPicedUp(int parcelId)
         {

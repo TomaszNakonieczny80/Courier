@@ -21,7 +21,6 @@ namespace Courier.BusinessLayer
         Task GenerateShipmentListsAsync();
         DateTime SetRaportDate();
         Task <List<Shipment>> GetShipmentListAsync(int courierId);
-        bool ExistShipmentList();
         void ClearShipmentList();
         Task SetParcelAsDeliveredAsync(int parcelId);
     }
@@ -54,16 +53,6 @@ namespace Courier.BusinessLayer
             _raportDate = raportDate;
             
             return raportDate;
-        }
-
-        public bool ExistShipmentList()
-        {
-            if (_shipmentList.Count == 0)
-            {
-                return false;
-            }
-
-            return true;
         }
 
         public async Task SetParcelAsDeliveredAsync(int parcelId)
