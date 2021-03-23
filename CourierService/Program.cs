@@ -24,7 +24,7 @@ namespace Courier
         private INotificationsService _notificationService;
         private int _userId;
         private bool _exit = false;
-        private double _timeMultiplier = 1600;
+        private double _timeMultiplier = 60;
 
         static void Main()
         {
@@ -152,7 +152,6 @@ namespace Courier
             aTimerForStopDelivery.AutoReset = false;
             aTimerForStopDelivery.Enabled = true;
         }
-
 
         private void ShipmentRaport(object source, ElapsedEventArgs e)
         {

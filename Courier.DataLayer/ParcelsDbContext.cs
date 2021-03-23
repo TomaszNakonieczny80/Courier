@@ -30,7 +30,7 @@ namespace Courier.DataLayer
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=.;Database=HW6_20210301_CourierOperations;Trusted_Connection=True");
+            optionsBuilder.UseSqlServer(@"Server=.;Database=HW7_20210323_CourierOperations;Trusted_Connection=True");
         }
     }
 }
