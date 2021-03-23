@@ -102,9 +102,6 @@ namespace Courier
             _menu.ClearOption();
             _menu.AddOption(new MenuItem { Key = 1, Action = AddParcel, Description = "Add parcel" });
             _menu.AddOption(new MenuItem { Key = 2, Action = AddCourierCar, Description = "Add courier car" });
-
-            _menu.AddOption(new MenuItem { Key = 5, Action = ShipmentRaport, Description = "ShipmentRaport" });
-            _menu.AddOption(new MenuItem { Key = 6, Action = GenerateShipmentListWeb, Description = "GenerateShipementListWeb" });
             _menu.AddOption(new MenuItem { Key = 3, Action = () => { _exit = true; }, Description = "Exit" });
         }
 
@@ -167,25 +164,10 @@ namespace Courier
             SetTimerShipmentAutomatDelivery();
         }
 
-        private void ShipmentRaport()
-        {
-            _parcelsService.GenerateShipmentListsAsync().Wait();
-        }
-
-        private void ClearShipmentList(object source, ElapsedEventArgs e)
-        {
-            _parcelsService.ClearShipmentList();
-        }
-
         private void SetStatusAsOnTheWay(object source, ElapsedEventArgs e)
         {
             _parcelsService.SetParcelsAsOnTheWay();
             Console.WriteLine("\nParcels are on the way (applies to automatically handled)");
-        }
-
-        private void GenerateShipmentListWeb()
-        {
-            _parcelsService.GetShipmentListAsync(_userId).Wait();
         }
 
         private void SetStatusOnDelivered(object source, ElapsedEventArgs e)
@@ -197,11 +179,6 @@ namespace Courier
             }
             _parcelsService.SetParcelsAsDelivered(parcelsOnTheWay);
             Console.WriteLine("\nParcels are delivered (applies to automatically handled");
-        }
-
-        void GenerateShipmentListCourier()
-        {
-            _parcelsService.GetShipmentListAsync(6);
         }
 
         void AddParcel()
